@@ -1,9 +1,12 @@
 package main;
 
 import exception.NumberMismatchException;
+import lombok.Getter;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
+@Getter
 public class Neuron {
     private List<Double> weights;
     private List<Double> weightChanges;
@@ -21,9 +24,9 @@ public class Neuron {
         this.weights = Arrays.stream(new double[numWeights]).boxed().toList();
         Random random = new Random();
         double range = argB - argA;
-        this.weights = this.weights.stream().map(x -> x = random.nextInt() % range + argA).toList();
+        this.weights = this.weights.stream().map(x -> x = random.nextDouble() % range + argA).collect(Collectors.toList());
         this.output = -1;
-        this.weightChanges = Arrays.stream(new double[numWeights]).boxed().toList();
+        this.weightChanges = Arrays.stream(new double[numWeights]).boxed().collect(Collectors.toList());
     }
 
     /***
@@ -33,7 +36,7 @@ public class Neuron {
      */
     public double sum(double[] X) throws NumberMismatchException {
         if (X.length != this.weights.size()) throw new NumberMismatchException("");
-        int res = 0;
+        double res = 0;
         for (int i = 0; i < X.length; i++) {
             res += X[i] * this.weights.get(i);
         }

@@ -1,27 +1,26 @@
 package main;
 
 import exception.NumberMismatchException;
+import lombok.Getter;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-
+@Getter
 public class NeuralNet implements NeuralNetInterface {
 
-    public int argNumInputs;
-    public int argNumHidden;
-    public double argLearningRate;
-    public double argMomentumTerm;
-    public double argA;
-    public double argB;
-    public List<Neuron> layers;
+    private int argNumInputs;
+    private int argNumHidden;
+    private double argLearningRate;
+    private double argMomentumTerm;
+    private double argA;
+    private double argB;
+    private List<Neuron> hiddenLayer;
     private Neuron outputNeuron;
 
-    private static final double THREASHOLD = 0.2;
-
-
+    private static final double THREASHOLD = 0.05;
 
 
     /**
@@ -40,50 +39,65 @@ public class NeuralNet implements NeuralNetInterface {
         this.argMomentumTerm = argMomentumTerm;
         this.argA = argA;
         this.argB = argB;
-        this.layers = new ArrayList<>();
+        this.hiddenLayer = new ArrayList<>();
         initializeWeights();
     }
 
 
     @Override
     public double outputFor(double[] X) {
-        return 0;
+        return forwardFeed(X);
     }
 
     @Override
     public double train(double[] X, double argValue) {
+        return forwardFeed(X) - argValue;
+    }
+
+    public double[] setUpBias(double[] X){
         double[] temp = new double[X.length+1];
         System.arraycopy(X, 0, temp, 0, X.length);
         temp[temp.length - 1] = bias;
-        initializeWeights();
-        double curError = 1;
-        while(curError > THREASHOLD) {
-            double yi = sigmoid(forwardProp(temp));
-            curError = Math.abs(argValue - yi);
-            backProp(yi, argValue);
-        }
-        return 0;
+        return temp;
     }
 
-    private double forwardProp(double[] X) {
+    public int train(double[][] X, double[] targets) {
+        int epoch = 0;
+        double totalError;
+        do {
+            totalError = 0;
+            for (int i = 0; i < X.length; i++) {
+                double[] temp = setUpBias(X[i]);
+                initializeWeights();
+                double yi = forwardFeed(temp);
+                totalError += Math.pow(Math.abs(targets[i] - yi), 2) / 2;
+                backProp(yi, targets[i]);
+            }
+            epoch++;
+        } while (totalError > THREASHOLD);
+        return epoch;
+    }
+
+    public double forwardFeed(double[] X) {
         List<Double> layer1Outputs = new ArrayList<>();
         try {
-            for (Neuron neuron : this.layers) {
-                double curOutput = this.sigmoid(neuron.sum(X));
+            for (Neuron neuron : this.hiddenLayer) {
+                double curOutput = this.customSigmoid(neuron.sum(X));
                 neuron.setOutput(curOutput);
                 layer1Outputs.add(curOutput);
             }
-            return this.outputNeuron.sum(layer1Outputs.stream().mapToDouble(i -> i).toArray());
+            this.outputNeuron.setOutput(customSigmoid(this.outputNeuron.sum(layer1Outputs.stream().mapToDouble(i -> i).toArray())));
+            return this.outputNeuron.getOutput();
         } catch (NumberMismatchException e) {
             System.exit(0);
         }
         return 0;
     }
 
-    private void backProp(double yi, double argValue) {
-        this.outputNeuron.setErrorSignal(argValue - yi);
-        for (int i = 0; i < this.layers.size(); i++) {
-            Neuron curNeuron = this.layers.get(i);
+    public void backProp(double yi, double target) {
+        this.outputNeuron.setErrorSignal(target - yi);
+        for (int i = 0; i < this.hiddenLayer.size(); i++) {
+            Neuron curNeuron = this.hiddenLayer.get(i);
             curNeuron.setErrorSignal(this.outputNeuron.getErrorSignal(), this.outputNeuron.getWeightByIndex(i));
             curNeuron.updateWeights(this.argMomentumTerm, this.argLearningRate);
         }
@@ -112,18 +126,16 @@ public class NeuralNet implements NeuralNetInterface {
     @Override
     public void initializeWeights() {
         int neuronCount = this.argNumHidden + 1;
-        int numLayers =
-        this.layers = new ArrayList<>();
+        this.hiddenLayer = new ArrayList<>();
         this.outputNeuron = new Neuron(this.argNumHidden + 1, this.argA, this.argB);
-        while
         while (neuronCount -- > 0) {
-            layers.add(new Neuron(this.argNumInputs + 1, this.argA, this.argB));
+            hiddenLayer.add(new Neuron(this.argNumInputs + 1, this.argA, this.argB));
         }
     }
 
     @Override
     public void zeroWeights() {
-        this.layers.forEach(Neuron::zeroWeights);
+        this.hiddenLayer.forEach(Neuron::zeroWeights);
         this.outputNeuron.zeroWeights();
     }
 }
