@@ -19,8 +19,9 @@ public class NeuralNet implements NeuralNetInterface {
     private double argB;
     private List<Neuron> hiddenLayer;
     private Neuron outputNeuron;
+    private boolean isBipolar;
 
-    private static final double THREASHOLD = 0.1;
+    private static final double THREASHOLD = 0.005;
 
 
     /**
@@ -40,6 +41,7 @@ public class NeuralNet implements NeuralNetInterface {
         this.argA = argA;
         this.argB = argB;
         this.hiddenLayer = new ArrayList<>();
+        this.isBipolar = argA + argB == 0;
         initializeWeights();
     }
 
@@ -64,16 +66,17 @@ public class NeuralNet implements NeuralNetInterface {
     public int train(double[][] X, double[] targets) {
         int epoch = 0;
         double totalError;
+        initializeWeights();
         do {
             totalError = 0;
             for (int i = 0; i < X.length; i++) {
                 double[] temp = setUpBias(X[i]);
-                initializeWeights();
                 double yi = forwardFeed(temp);
                 totalError += Math.pow(Math.abs(targets[i] - yi), 2) / 2;
                 backProp(yi, targets[i]);
             }
             epoch++;
+            System.out.println(totalError);
         } while (totalError > THREASHOLD);
         return epoch;
     }
@@ -96,6 +99,7 @@ public class NeuralNet implements NeuralNetInterface {
 
     public void backProp(double yi, double target) {
         this.outputNeuron.setErrorSignalForOutputNeuron(target - yi);
+        this.outputNeuron.updateWeights(this.argMomentumTerm, this.argLearningRate);
         for (int i = 0; i < this.hiddenLayer.size(); i++) {
             Neuron curNeuron = this.hiddenLayer.get(i);
             curNeuron.setErrorSignal(this.outputNeuron.getErrorSignal(), this.outputNeuron.getWeightByIndex(i));
@@ -120,16 +124,16 @@ public class NeuralNet implements NeuralNetInterface {
 
     @Override
     public double customSigmoid(double x) {
-        return (this.argB - this.argA) / (1 + Math.exp(-x)) - this.argA;
+        return (this.argB - this.argA) / (1 + Math.exp(-x)) + this.argA;
     }
 
     @Override
     public void initializeWeights() {
         int neuronCount = this.argNumHidden + 1;
         this.hiddenLayer = new ArrayList<>();
-        this.outputNeuron = new Neuron(this.argNumHidden + 1, this.argA, this.argB);
+        this.outputNeuron = new Neuron(this.argNumHidden + 1, this.isBipolar);
         while (neuronCount -- > 0) {
-            hiddenLayer.add(new Neuron(this.argNumInputs + 1, this.argA, this.argB));
+            hiddenLayer.add(new Neuron(this.argNumInputs + 1, this.isBipolar));
         }
     }
 

@@ -10,23 +10,26 @@ import java.util.stream.Collectors;
 public class Neuron {
     private List<Double> weights;
     private List<Double> weightChanges;
+    private double[] inputs;
     private double output;
     private double errorSignal;
+    private boolean isBipolar;
 
+    private static final double WEIGHT_UPPER_BOUND = 0.5;
+    private static final double WEIGHT_LOWER_BOUND = -0.5;
 
     /***
      * Constructor of the Neuron
      * @param numWeights: number of weights that link to this neuron
-     * @param argA: the lower bound of the weight
-     * @param argB: the upper bound of the weight
      */
-    public Neuron(int numWeights, double argA, double argB) {
+    public Neuron(int numWeights, boolean isBipolar) {
         this.weights = Arrays.stream(new double[numWeights]).boxed().collect(Collectors.toList());
         Random random = new Random();
-        double range = argB - argA;
-        this.weights = this.weights.stream().map(x -> x = random.nextDouble() * range + argA).collect(Collectors.toList());
+        double range = this.WEIGHT_UPPER_BOUND - this.WEIGHT_LOWER_BOUND;
+        this.weights = this.weights.stream().map(x -> x = random.nextDouble() * range + this.WEIGHT_LOWER_BOUND).collect(Collectors.toList());
         this.output = -1;
         this.weightChanges = Arrays.stream(new double[numWeights]).boxed().collect(Collectors.toList());
+        this.isBipolar = isBipolar;
     }
 
     /***
@@ -35,6 +38,7 @@ public class Neuron {
      * @return the dot product of the X and weights
      */
     public double sum(double[] X) throws NumberMismatchException {
+        this.inputs = X;
         if (X.length != this.weights.size()) throw new NumberMismatchException("");
         double res = 0;
         for (int i = 0; i < X.length; i++) {
@@ -70,10 +74,11 @@ public class Neuron {
 
     /**
      *
-     * @param errorSignals: the error signals of the layer above
+     * @param errorSignal: the error signals of the layer above
      */
     public void setErrorSignal(double errorSignal, double weight) {
-        this.errorSignal = this.output * (1 - this.output) * errorSignal * weight;
+        this.errorSignal = isBipolar ? (this.output + 1) * (1 - this.output) * errorSignal * weight * 0.5 :
+                this.output * (1 - this.output) * errorSignal * weight;
     }
 
     public void setOutput(double output) {
@@ -81,7 +86,8 @@ public class Neuron {
     }
 
     public void setErrorSignalForOutputNeuron(double error) {
-        this.errorSignal = error * this.output * (1 - this.output);
+        this.errorSignal = isBipolar ? error * (this.output + 1) * (1 - this.output) * 0.5 :
+                error * this.output * (1 - this.output);
     }
 
 
@@ -93,7 +99,7 @@ public class Neuron {
         for (int i = 0; i < this.weightChanges.size(); i++) {
             double curWeightChange = this.weightChanges.get(i);
             double curWeight = this.weights.get(i);
-            double updatedWeightChange = momentum * curWeightChange + stepSize * this.errorSignal * curWeight;
+            double updatedWeightChange = momentum * curWeightChange + stepSize * this.errorSignal * this.inputs[i];
             this.weightChanges.set(i, updatedWeightChange);
             this.weights.set(i, curWeight + updatedWeightChange);
         }

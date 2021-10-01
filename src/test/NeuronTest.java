@@ -12,7 +12,7 @@ class NeuronTest {
 
     @BeforeEach
     void setUp() {
-        this.bipolarNeuron = new Neuron(3, 1,1);
+        this.bipolarNeuron = new Neuron(3, true);
     }
 
     @Test
