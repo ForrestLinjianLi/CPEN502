@@ -1,10 +1,10 @@
 package test;
 
+import exception.NumberMismatchException;
 import main.Neuron;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 class NeuronTest {
 
@@ -12,7 +12,7 @@ class NeuronTest {
 
     @BeforeEach
     void setUp() {
-        this.bipolarNeuron = new Neuron(20, 1,-1);
+        this.bipolarNeuron = new Neuron(3, 1,1);
     }
 
     @Test
@@ -44,5 +44,15 @@ class NeuronTest {
     @Test
     void updateWeights() {
 
+    }
+
+    @Test
+    void sumTest() {
+        double[] testInputs = new double[]{1, 1, 1};
+        try {
+            Assertions.assertEquals(this.bipolarNeuron.sum(testInputs), 1+1+1);
+        } catch (NumberMismatchException e) {
+            Assertions.fail();
+        }
     }
 }

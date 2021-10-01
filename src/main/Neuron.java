@@ -21,10 +21,10 @@ public class Neuron {
      * @param argB: the upper bound of the weight
      */
     public Neuron(int numWeights, double argA, double argB) {
-        this.weights = Arrays.stream(new double[numWeights]).boxed().toList();
+        this.weights = Arrays.stream(new double[numWeights]).boxed().collect(Collectors.toList());
         Random random = new Random();
         double range = argB - argA;
-        this.weights = this.weights.stream().map(x -> x = random.nextDouble() % range + argA).collect(Collectors.toList());
+        this.weights = this.weights.stream().map(x -> x = random.nextDouble() * range + argA).collect(Collectors.toList());
         this.output = -1;
         this.weightChanges = Arrays.stream(new double[numWeights]).boxed().collect(Collectors.toList());
     }
@@ -80,7 +80,7 @@ public class Neuron {
         this.output = output;
     }
 
-    public void setErrorSignal(double error) {
+    public void setErrorSignalForOutputNeuron(double error) {
         this.errorSignal = error * this.output * (1 - this.output);
     }
 

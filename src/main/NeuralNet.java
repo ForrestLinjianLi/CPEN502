@@ -20,7 +20,7 @@ public class NeuralNet implements NeuralNetInterface {
     private List<Neuron> hiddenLayer;
     private Neuron outputNeuron;
 
-    private static final double THREASHOLD = 0.05;
+    private static final double THREASHOLD = 0.1;
 
 
     /**
@@ -95,7 +95,7 @@ public class NeuralNet implements NeuralNetInterface {
     }
 
     public void backProp(double yi, double target) {
-        this.outputNeuron.setErrorSignal(target - yi);
+        this.outputNeuron.setErrorSignalForOutputNeuron(target - yi);
         for (int i = 0; i < this.hiddenLayer.size(); i++) {
             Neuron curNeuron = this.hiddenLayer.get(i);
             curNeuron.setErrorSignal(this.outputNeuron.getErrorSignal(), this.outputNeuron.getWeightByIndex(i));
