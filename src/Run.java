@@ -1,6 +1,6 @@
-package main;
+import main.NeuralNet;
 
-import java.io.InputStream;
+import java.util.Objects;
 import java.util.Scanner;
 
 public class Run {
@@ -16,8 +16,8 @@ public class Run {
         Scanner s = new Scanner(System.in);
         System.out.println("Please input the argNumInputs, argNumHidden, argLearningRate, argMomentumTerm, argA, argB to train: \n");
         System.out.println("Default? Y/N: ");
-        boolean isDefault = Boolean.parseBoolean(s.nextLine());
-        if (isDefault) {
+        String isDefault = s.nextLine();
+        if (Objects.equals(isDefault, "N")) {
             System.out.println("argNumInputs: ");
             int argNumInputs = Integer.parseInt(s.nextLine());
             System.out.println("argNumHidden: ");
@@ -37,13 +37,13 @@ public class Run {
 
         System.out.println("Bipolar? (Y/N)");
         boolean isBipolar = Boolean.parseBoolean(s.nextLine());
+        int epochCount = 0;
         if (isBipolar) {
-            neuralNet.train(inputBipolar, targetBipolar);
+            epochCount = neuralNet.train(inputBipolar, targetBipolar);
         } else {
-            neuralNet.train(inputBinary, targetBinary);
+            epochCount = neuralNet.train(inputBinary, targetBinary);
         }
+        System.out.printf("The number of epoch is: %d", epochCount);
 
-        neuralNet.train(inputBinary, targetBinary);
-        System.out.println(neuralNet.outputFor(neuralNet.setUpBias(new double[]{0, 1})));
     }
 }

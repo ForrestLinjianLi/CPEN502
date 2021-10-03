@@ -21,7 +21,7 @@ public class NeuralNet implements NeuralNetInterface {
     private Neuron outputNeuron;
     private boolean isBipolar;
 
-    private static final double THREASHOLD = 0.005;
+    private static final double THREASHOLD = 0.1;
 
 
     /**
