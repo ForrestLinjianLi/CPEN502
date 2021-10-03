@@ -3,8 +3,9 @@ package main;
 import exception.NumberMismatchException;
 import lombok.Getter;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,7 +22,7 @@ public class NeuralNet implements NeuralNetInterface {
     private Neuron outputNeuron;
     private boolean isBipolar;
 
-    private static final double THREASHOLD = 0.1;
+    private static final double THREASHOLD = 0.05;
 
 
     /**
@@ -67,6 +68,7 @@ public class NeuralNet implements NeuralNetInterface {
         int epoch = 0;
         double totalError;
         initializeWeights();
+        StringBuilder stringBuilder = new StringBuilder();
         do {
             totalError = 0;
             for (int i = 0; i < X.length; i++) {
@@ -76,8 +78,22 @@ public class NeuralNet implements NeuralNetInterface {
                 backProp(yi, targets[i]);
             }
             epoch++;
-            System.out.println(totalError);
+            stringBuilder.append(totalError + "\n");
         } while (totalError > THREASHOLD);
+        String fileName = String.format("./data/%s_%s_%d.txt", isBipolar? "Bipolar" : "Binary",  LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH-mm-ss")), epoch);
+        File file = new File(fileName);
+        try {
+            file.createNewFile();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(file))) {
+            bufferedWriter.write(stringBuilder.toString());
+            System.out.printf("The data is saved to file: %s \n", fileName);
+            bufferedWriter.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         return epoch;
     }
 
