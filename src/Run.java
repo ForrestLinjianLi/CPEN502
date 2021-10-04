@@ -1,12 +1,14 @@
 import main.NeuralNet;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Objects;
 import java.util.Scanner;
 
 public class Run {
 
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         double[][] inputBinary = new double[][]{{0, 0}, {0, 1}, {1, 0}, {1, 1}};
         double[] targetBinary = new double[]{0, 1, 1, 0};
         double[][] inputBipolar = new double[][]{{-1, -1}, {-1, 1}, {1, -1}, {1, 1}};

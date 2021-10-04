@@ -4,13 +4,14 @@ import exception.NumberMismatchException;
 import lombok.Getter;
 
 import java.io.*;
+import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
 @Getter
-public class NeuralNet implements NeuralNetInterface {
+public class NeuralNet implements NeuralNetInterface, Serializable {
 
     private int argNumInputs;
     private int argNumHidden;
@@ -64,6 +65,13 @@ public class NeuralNet implements NeuralNetInterface {
         return temp;
     }
 
+
+    /**
+     * train the model and save the data to an text file
+     * @param X: training inputs
+     * @param targets: training targets
+     * @return number of epochs
+     */
     public int train(double[][] X, double[] targets) {
         int epoch = 0;
         double totalError;
@@ -80,7 +88,7 @@ public class NeuralNet implements NeuralNetInterface {
             epoch++;
             stringBuilder.append(totalError + "\n");
         } while (totalError > THREASHOLD);
-        String fileName = String.format("./data/%s_%s_%d.txt", isBipolar? "Bipolar" : "Binary",  LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH-mm-ss")), epoch);
+        String fileName = String.format("./data/%s_m%f_%s_%d.txt", isBipolar? "Bipolar" : "Binary",  this.argMomentumTerm, LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH-mm-ss")), epoch);
         File file = new File(fileName);
         try {
             file.createNewFile();
@@ -124,13 +132,26 @@ public class NeuralNet implements NeuralNetInterface {
     }
 
     @Override
-    public void save(File argFile) {
-
+    public void save(File argFile)  {
+        try(ObjectOutputStream objectOutputStream = new ObjectOutputStream(new FileOutputStream(argFile))) {
+            objectOutputStream.writeObject(this);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
     public void load(String argFileName) throws IOException {
-
+        try(ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream(argFileName))) {
+            NeuralNet neuralNet = (NeuralNet) objectInputStream.readObject();
+            Class thisClass = this.getClass();
+            for (Field field: neuralNet.getClass().getDeclaredFields()
+                 ) {
+                field.set(this, field.get(neuralNet));
+            }
+        } catch (ClassNotFoundException | IllegalAccessException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override

@@ -3,11 +3,12 @@ package main;
 import exception.NumberMismatchException;
 import lombok.Getter;
 
+import java.io.Serializable;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Getter
-public class Neuron {
+public class Neuron implements Serializable {
     private List<Double> weights;
     private List<Double> weightChanges;
     private double[] inputs;
@@ -73,7 +74,7 @@ public class Neuron {
 
 
     /**
-     *
+     * Set the error signal for the hidden layer neurons. Equation depends on the is Bipolar
      * @param errorSignal: the error signals of the layer above
      */
     public void setErrorSignal(double errorSignal, double weight) {
@@ -85,6 +86,11 @@ public class Neuron {
         this.output = output;
     }
 
+
+    /**
+     * Set the error signal for output neuron
+     * @param error: target - yi
+     */
     public void setErrorSignalForOutputNeuron(double error) {
         this.errorSignal = isBipolar ? error * (this.output + 1) * (1 - this.output) * 0.5 :
                 error * this.output * (1 - this.output);
@@ -95,11 +101,17 @@ public class Neuron {
         return this.weights.get(i);
     }
 
-    public void updateWeights(double momentum, double stepSize) {
+
+    /**
+     * Updates the weights
+     * @param momentum:
+     * @param learningRate:
+     */
+    public void updateWeights(double momentum, double learningRate) {
         for (int i = 0; i < this.weightChanges.size(); i++) {
             double curWeightChange = this.weightChanges.get(i);
             double curWeight = this.weights.get(i);
-            double updatedWeightChange = momentum * curWeightChange + stepSize * this.errorSignal * this.inputs[i];
+            double updatedWeightChange = momentum * curWeightChange + learningRate * this.errorSignal * this.inputs[i];
             this.weightChanges.set(i, updatedWeightChange);
             this.weights.set(i, curWeight + updatedWeightChange);
         }
