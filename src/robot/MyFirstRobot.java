@@ -23,6 +23,7 @@ public class MyFirstRobot extends AdvancedRobot {
             Action.ACTION action = q.move(getState());
         }
     }
+
     /**
      * onScannedRobot: What to do when you see another robot
      */
@@ -36,12 +37,6 @@ public class MyFirstRobot extends AdvancedRobot {
         state.setEnemyEnergy(enemyEnergy);
         state.setEnemyHeading(enemyEnergy);
     }
-    /**
-     * onHitByBullet: What to do when you're hit by a bullet
-     */
-    public void onHitByBullet(HitByBulletEvent e) {
-        turnLeft(90 - e.getBearing());
-    }
 
     public void fire() {
         scan();
@@ -51,36 +46,51 @@ public class MyFirstRobot extends AdvancedRobot {
         return State.generateState(State.getStateArray(state));
     }
 
+    /**
+     * This method is called when the robot won.
+     * @param event
+     */
     @Override
-    public void onDeath(DeathEvent event) {
-
+    public void onWin(WinEvent event) {
+        reward += 10;
     }
 
+    /**
+     * This method is called when the robot died.
+     * @param event
+     */
+    @Override
+    public void onDeath(DeathEvent event) {
+        reward -= 10;
+    }
 
-//    /**
-//     * This method is called when the robot collides with the opponent.
-//     * @param event
-//     */
-//    @Override
-//    public void onHitRobot(HitRobotEvent event) {
-//
-//    }
-//
-//    /**
-//     * This method is called when the robot collides with the opponent.
-//     * @param event
-//     */
-//    @Override
-//    public void onHitRobot(HitRobotEvent event) {
-//
-//    }
-//
-//    /**
-//     * This method is called when another robot dies.
-//     * @param event
-//     */
-//    @Override
-//    public void onRobotDeath(RobotDeathEvent event) {
-//
-//    }
+    /**
+     * This method is called when one of your bullets hits another robot
+     * @param event
+     */
+    @Override
+    public void onBulletHit(BulletHitEvent event) {
+        double bulletPower = event.getBullet().getPower();
+        reward += 3*(int)bulletPower;
+    }
+
+    /**
+     * This method is called when one of our bullets has missed.
+     * @param event
+     */
+    @Override
+    public void onBulletMissed(BulletMissedEvent event) {
+        double bulletPower = event.getBullet().getPower();
+        reward -= (int)bulletPower;
+    }
+
+    /**
+     * This method is called when your robot is hit by a bullet.
+     * @param event
+     */
+    @Override
+    public void onHitByBullet(HitByBulletEvent event) {
+        double bulletPower = event.getBullet().getPower();
+        reward -= 3*(int)bulletPower;
+    }
 }
