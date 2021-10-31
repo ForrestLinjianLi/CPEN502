@@ -33,9 +33,7 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="library" name="libs" level="project" />
     <orderEntry type="library" name="robocode" level="project" />
-    <orderEntry type="library" name="battles" level="project" />
-    <orderEntry type="library" name="javadoc" level="project" />
+    <orderEntry type="library" name="annotations-13.0" level="project" />
   </component>
 </module>

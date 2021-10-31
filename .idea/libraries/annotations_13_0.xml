@@ -1,0 +1,22 @@
+<component name="libraryTable">
+  <library name="annotations-13.0">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/robocode/libs/annotations-13.0.jar!/" />
+      <root url="jar://$USER_HOME$/robocode/libs/bcel-6.2.jar!/" />
+      <root url="jar://$USER_HOME$/robocode/libs/codesize-1.2.jar!/" />
+      <root url="jar://$USER_HOME$/robocode/libs/kotlin-stdlib-1.5.20.jar!/" />
+      <root url="jar://$USER_HOME$/robocode/libs/picocontainer-2.14.2.jar!/" />
+      <root url="jar://$USER_HOME$/robocode/libs/robocode.battle-1.9.4.3.jar!/" />
+      <root url="jar://$USER_HOME$/robocode/libs/robocode.core-1.9.4.3.jar!/" />
+      <root url="jar://$USER_HOME$/robocode/libs/robocode.host-1.9.4.3.jar!/" />
+      <root url="jar://$USER_HOME$/robocode/libs/robocode.jar!/" />
+      <root url="jar://$USER_HOME$/robocode/libs/robocode.repository-1.9.4.3.jar!/" />
+      <root url="jar://$USER_HOME$/robocode/libs/robocode.sound-1.9.4.3.jar!/" />
+      <root url="jar://$USER_HOME$/robocode/libs/robocode.ui-1.9.4.3.jar!/" />
+      <root url="jar://$USER_HOME$/robocode/libs/robocode.ui.editor-1.9.4.3.jar!/" />
+      <root url="jar://$USER_HOME$/robocode/libs/roborumble.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
