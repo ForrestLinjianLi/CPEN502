@@ -1,7 +1,7 @@
 package test;
 
 import exception.NumberMismatchException;
-import main.Neuron;
+import main.NN.Neuron;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

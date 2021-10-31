@@ -1,4 +1,4 @@
-package main;
+package main.QLearning;
 
 import robocode.AdvancedRobot;
 
@@ -26,8 +26,8 @@ public class Action {
             case RIGHT:
                 robot.setTurnRight(90);
                 robot.setAhead(DISTANCE);
-            case FIRE:
-
+//            case FIRE:
+//
         }
     }
 
@@ -58,6 +58,8 @@ public class Action {
                 return 3;
             case FIRE:
                 return 4;
+            default:
+                return -1;
         }
     }
 }

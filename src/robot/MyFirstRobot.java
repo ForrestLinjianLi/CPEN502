@@ -1,19 +1,26 @@
 package robot;
 
-import main.Action;
-import main.QLearning;
-import main.State;
-import robocode.AdvancedRobot;
-import robocode.HitByBulletEvent;
-import robocode.Robot;
-import robocode.ScannedRobotEvent;
+import main.QLearning.Action;
+import main.QLearning.QLearning;
+import main.QLearning.State;
+import robocode.*;
 
 public class MyFirstRobot extends AdvancedRobot {
     private QLearning q;
+    private State state;
+    private int reward;
+
+
+    public MyFirstRobot() {
+        super();
+        state = new State();
+    }
+
     public void run() {
         q = new QLearning();
         while(true) {
-            getS
+            scan();
+            Action.ACTION action = q.move(getState());
         }
     }
     /**
@@ -23,13 +30,11 @@ public class MyFirstRobot extends AdvancedRobot {
         double enemyBearing = e.getBearing();
         double enemyEnergy = e.getEnergy();
         double distance = e.getDistance();
-        State state = new State();
         state.setBearing(enemyBearing);
         state.setDistance(distance);
         state.setMyEnergy(this.getEnergy());
         state.setEnemyEnergy(enemyEnergy);
         state.setEnemyHeading(enemyEnergy);
-        Action.ACTION action = q.move(getState());
     }
     /**
      * onHitByBullet: What to do when you're hit by a bullet
@@ -43,6 +48,39 @@ public class MyFirstRobot extends AdvancedRobot {
     }
 
     public State getState() {
+        return State.generateState(State.getStateArray(state));
+    }
+
+    @Override
+    public void onDeath(DeathEvent event) {
 
     }
+
+
+//    /**
+//     * This method is called when the robot collides with the opponent.
+//     * @param event
+//     */
+//    @Override
+//    public void onHitRobot(HitRobotEvent event) {
+//
+//    }
+//
+//    /**
+//     * This method is called when the robot collides with the opponent.
+//     * @param event
+//     */
+//    @Override
+//    public void onHitRobot(HitRobotEvent event) {
+//
+//    }
+//
+//    /**
+//     * This method is called when another robot dies.
+//     * @param event
+//     */
+//    @Override
+//    public void onRobotDeath(RobotDeathEvent event) {
+//
+//    }
 }

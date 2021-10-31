@@ -1,4 +1,4 @@
-package main;
+package main.NN;
 
 import exception.NumberMismatchException;
 import lombok.Getter;

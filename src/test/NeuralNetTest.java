@@ -1,6 +1,6 @@
 package test;
 
-import main.NeuralNet;
+import main.NN.NeuralNet;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import util.NNUtil;

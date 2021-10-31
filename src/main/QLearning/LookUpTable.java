@@ -1,4 +1,6 @@
-package main;
+package main.QLearning;
+
+import main.interfaces.LUTInterface;
 
 import java.io.*;
 import java.lang.reflect.Field;

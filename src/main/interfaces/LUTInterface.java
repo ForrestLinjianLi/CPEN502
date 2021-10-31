@@ -1,4 +1,6 @@
-package main;
+package main.interfaces;
+
+import main.interfaces.CommonInterface;
 
 public interface LUTInterface extends CommonInterface {
 

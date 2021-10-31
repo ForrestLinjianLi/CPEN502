@@ -1,7 +1,4 @@
-package main;
-
-import robocode.AdvancedRobot;
-import robocode.Robot;
+package main.QLearning;
 
 public class QLearning {
     private LookUpTable lookUpTable;

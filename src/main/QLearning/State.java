@@ -1,4 +1,4 @@
-package main;
+package main.QLearning;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -49,16 +49,21 @@ public class State {
     }
 
     public static double[] generateStateArray(double[] X) {
+        State state = generateState(X);
+        return new double[]{state.getEnemyHeading(), state.getBearing(), state.getEnemyEnergy(), state.getMyEnergy(), state.getDistance()};
+    }
+
+    public static double[] getStateArray(State state) {
+        return new double[]{state.getEnemyHeading(), state.getBearing(), state.getEnemyEnergy(), state.getMyEnergy(), state.getDistance()};
+    }
+
+    public static State generateState(double[] X) {
         State state = new State();
         state.setEnemyHeading(X[0]);
         state.setBearing(X[1]);
         state.setEnemyEnergy(X[2]);
         state.setMyEnergy(X[3]);
         state.setDistance(X[4]);
-        return new double[]{state.getEnemyHeading(), state.getBearing(), state.getEnemyEnergy(), state.getMyEnergy(), state.getDistance()};
-    }
-
-    public static double[] getStateArray(State state) {
-        return new double[]{state.getEnemyHeading(), state.getBearing(), state.getEnemyEnergy(), state.getMyEnergy(), state.getDistance()};
+        return state;
     }
 }

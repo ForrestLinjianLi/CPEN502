@@ -1,8 +1,6 @@
-import main.NeuralNet;
+import main.NN.NeuralNet;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.Objects;
 import java.util.Scanner;
 
 public class Run {

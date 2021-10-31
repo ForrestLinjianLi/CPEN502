@@ -1,7 +1,8 @@
-package main;
+package main.NN;
 
 import exception.NumberMismatchException;
 import lombok.Getter;
+import main.interfaces.NeuralNetInterface;
 
 import java.io.*;
 import java.lang.reflect.Field;
