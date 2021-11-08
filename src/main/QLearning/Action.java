@@ -4,17 +4,17 @@ public class Action {
     public enum ACTION {
         FORWARD,
         BACKWARD,
-        LEFT,
-        RIGHT,
+        AHEAD_LEFT,
+        AHEAD_RIGHT,
         FIRE,
-        BIG_LEFT,
-        BIG_RIGHT
+//        MOVE_TO_CENTRE,
+        BACK_LEFT,
+        BACK_RIGHT
     }
 
     public static final int LONG_DISTANCE = 100;
     public static final int SHORT_DISTANCE = 50;
     public static final int SHORT_ANGLE = 50;
-    public static final int LARGE_ANGLE = 100;
     public static final int NUM_ACTIONS = ACTION.values().length;
 
 
@@ -29,16 +29,18 @@ public class Action {
                 return 0;
             case BACKWARD:
                 return 1;
-            case LEFT:
+            case AHEAD_LEFT:
                 return 2;
-            case RIGHT:
+            case AHEAD_RIGHT:
                 return 3;
             case FIRE:
                 return 4;
-            case BIG_LEFT:
+            case BACK_LEFT:
                 return 5;
-            case BIG_RIGHT:
+            case BACK_RIGHT:
                 return 6;
+//            case MOVE_TO_CENTRE:
+//                return 5;
             default:
                 return -1;
         }

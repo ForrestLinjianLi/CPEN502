@@ -1,5 +1,6 @@
 import main.NN.NeuralNet;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Scanner;
 
@@ -60,6 +61,7 @@ public class Run {
                 epochCount = neuralNet.train(inputBinary, targetBinary);
             }
             System.out.printf("The number of epoch is: %d \n", epochCount);
+            neuralNet.save(new File("./data/NN.txt"));
         }
     }
 }

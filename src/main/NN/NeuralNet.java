@@ -134,8 +134,8 @@ public class NeuralNet implements NeuralNetInterface, Serializable {
     }
 
     @Override
-    public void save()  {
-        try(ObjectOutputStream objectOutputStream = new ObjectOutputStream(new FileOutputStream(FILE_PATH))) {
+    public void save(File argFile)  {
+        try(ObjectOutputStream objectOutputStream = new ObjectOutputStream(new FileOutputStream(argFile))) {
             objectOutputStream.writeObject(this);
         } catch (IOException e) {
             e.printStackTrace();
@@ -143,15 +143,17 @@ public class NeuralNet implements NeuralNetInterface, Serializable {
     }
 
     @Override
-    public void load() throws IOException {
-        try(ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream(FILE_PATH))) {
+    public void load(String argFileName) {
+        try(ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream(argFileName))) {
             NeuralNet neuralNet = (NeuralNet) objectInputStream.readObject();
             Class thisClass = this.getClass();
             for (Field field: neuralNet.getClass().getDeclaredFields()
                  ) {
                 field.set(this, field.get(neuralNet));
             }
-        } catch (ClassNotFoundException | IllegalAccessException e) {
+        } catch (ClassNotFoundException | IllegalAccessException | FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
