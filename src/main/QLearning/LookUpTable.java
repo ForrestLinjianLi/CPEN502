@@ -1,26 +1,26 @@
 package main.QLearning;
 
 import main.interfaces.LUTInterface;
+import net.sf.robocode.host.io.RobotFileOutputStream;
+import robocode.RobocodeFileOutputStream;
 
 import java.io.*;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 
 public class LookUpTable implements LUTInterface, Serializable {
 
     private int argNumInputs;
     private int[] argVariableFloor;
     private int[] argVariableCeiling;
-    private double[][] table;
-    private Map<Double, Integer> indexTable;
+    private Map<Object, double[]> table;
+    private Map<State, Integer> count;
+    private double[] stateQ;
+    private static final String FILE_PATH = "data/LUT";
 
-    private int enemyHeadingLevel = 4;
-    private int bearingLevel = 4;
-    private int enemyEnergyLevel = 2;
-    private int myEnergyLevel = 2;
-    private int distanceLevel = 2;
 
     /**
      * Constructor.
@@ -33,7 +33,10 @@ public class LookUpTable implements LUTInterface, Serializable {
         this.argNumInputs = argNumInputs;
         this.argVariableFloor = argVariableFloor;
         this.argVariableCeiling = argVariableCeiling;
-        this.indexTable = new HashMap<>();
+        table = new HashMap<Object, double[]>();
+        count = new HashMap<>();
+        stateQ = new double[Action.NUM_ACTIONS];
+        Arrays.fill(stateQ, 0);
         initialiseLUT();
     }
 
@@ -48,9 +51,9 @@ public class LookUpTable implements LUTInterface, Serializable {
     }
 
     @Override
-    public void save(File argFile) {
+    public void save() {
         try {
-            FileOutputStream fos = new FileOutputStream("LUT.txt");
+            RobocodeFileOutputStream fos = new RobocodeFileOutputStream(FILE_PATH);
             ObjectOutputStream out = new ObjectOutputStream(fos);
             out.writeObject(this);
             out.close();
@@ -60,9 +63,9 @@ public class LookUpTable implements LUTInterface, Serializable {
     }
 
     @Override
-    public void load(String argFileName) throws IOException {
+    public void load() throws IOException {
         try {
-            FileInputStream fis = new FileInputStream("LUT.txt");
+            FileInputStream fis = new FileInputStream(FILE_PATH);
             ObjectInputStream in = new ObjectInputStream(fis);
             LookUpTable lookUpTable = (LookUpTable) in.readObject();
             for (Field field:this.getClass().getDeclaredFields()) {
@@ -76,36 +79,20 @@ public class LookUpTable implements LUTInterface, Serializable {
 
     @Override
     public void initialiseLUT() {
-        table = new double[this.distanceLevel *this.enemyEnergyLevel *this.enemyHeadingLevel *this.myEnergyLevel *this.bearingLevel]
-                [Action.NUM_ACTIONS];
-        Arrays.fill(table, 0.0);
-        int count = 0;
-        for (double i = 0; i < this.distanceLevel; i++)
-            for (int j = 0; j < this.enemyEnergyLevel; j++)
-                for (int k = 0; k < this.enemyHeadingLevel; k++)
-                    for (int l = 0; l < this.myEnergyLevel; l++)
-                        for (int m = 0; m < this.distanceLevel; m++)
-                            indexTable.put(hash(new double[]{i,j,k,l,m}), count++);
+        return;
     }
 
     @Override
     public int indexFor(double[] X) {
-        double[] convertedX = State.generateStateArray(X);
-        double hashVal = hash(convertedX);
-        return indexTable.getOrDefault(hashVal, -1);
+        return 0;
     }
 
-    private double hash(double[] X) {
-        double[] primes = new double[]{3,5,7,11,13};
-        double res = 0;
-        for (int i = 0; i < X.length; i++) {
-            res += X[i] * primes[i];
-        }
-        return res;
+    public double getQ(State state, Action.ACTION action) {
+        return table.getOrDefault(state, stateQ.clone())[Action.getActionNum(action)];
     }
 
     public double getMaxQ(State state) {
-        double[] actionQVals = table[indexFor(State.getStateArray(state))];
+        double[]  actionQVals = table.getOrDefault(state, stateQ.clone());
         double max = 0;
         for (int i = 0; i < Action.NUM_ACTIONS; i++) {
             max = Math.max(actionQVals[i], max);
@@ -113,10 +100,14 @@ public class LookUpTable implements LUTInterface, Serializable {
         return max;
     }
 
-    public Action.ACTION nextAction(double[] X) {
-        double[] actionQVals = table[indexFor(X)];
-        double max = 0;
-        Action.ACTION action = null;
+    public Action.ACTION nextAction(State state, double randomRate) {
+        Random random = new Random();
+        if (count.getOrDefault(state, 0) < 200 && random.nextInt(9) < 10 * randomRate) {
+            return Action.getAction(random.nextInt(3));
+        }
+        double[] actionQVals = table.getOrDefault(state, stateQ.clone());
+        double max = actionQVals[0];
+        Action.ACTION action = Action.ACTION.FORWARD;
         for (int i = 0; i < Action.NUM_ACTIONS; i++) {
             if (max<actionQVals[i]) {
                 action = Action.getAction(i);
@@ -126,6 +117,8 @@ public class LookUpTable implements LUTInterface, Serializable {
     }
 
     public void uodateQ(double q, State state, Action.ACTION action) {
-        table[indexFor(State.getStateArray(state))][Action.getActionNum(action)] = q;
+        table.put(state, table.getOrDefault(state, stateQ.clone()));
+        table.get(state)[Action.getActionNum(action)] = q;
+        count.put(state, count.getOrDefault(state, 0)+1);
     }
 }

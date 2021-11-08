@@ -5,22 +5,60 @@ import main.QLearning.QLearning;
 import main.QLearning.State;
 import robocode.*;
 
+import java.awt.*;
+
 public class MyFirstRobot extends AdvancedRobot {
     private QLearning q;
-    private State state;
+    private State prevState;
+    private State curState;
+    private Action.ACTION curAction;
     private int reward;
-
-
-    public MyFirstRobot() {
-        super();
-        state = new State();
-    }
+    private static final int REWARD = 1;
 
     public void run() {
-        q = new QLearning();
+        prevState = new State();
+        curState = new State();
+        q = QLearning.getInstance();
+        setAllColors(Color.red);
+        setAdjustGunForRobotTurn(true); //Gun not Fix to body
+        setAdjustRadarForGunTurn(true);
         while(true) {
+            curAction = q.move(curState);
+            setTurnRadarLeftRadians(2*Math.PI);
             scan();
-            Action.ACTION action = q.move(getState());
+            move(curAction);
+            updateState();
+        }
+    }
+
+    public void updateState() {
+        q.qLearn(reward, curAction, prevState, curState);
+        reward = 0;
+        prevState = new State(curState);
+    }
+
+    public void move(Action.ACTION action) {
+        switch (action) {
+            case FORWARD:
+                ahead(Action.SHORT_DISTANCE);
+            case BACKWARD:
+                back(Action.SHORT_DISTANCE);
+            case BIG_LEFT:
+                turnLeft(Action.LARGE_ANGLE);
+                back(Action.LONG_DISTANCE);
+            case BIG_RIGHT:
+                turnRight(Action.LARGE_ANGLE);
+                back(Action.LONG_DISTANCE);
+            case LEFT:
+                turnLeft(Action.SHORT_ANGLE);
+                ahead(Action.SHORT_DISTANCE);
+            case RIGHT:
+                turnRight(Action.SHORT_ANGLE);
+                ahead(Action.SHORT_DISTANCE);
+            case FIRE:
+                fire();
+            curState.setHorizontal(getX());
+            curState.setVertical(getY());
         }
     }
 
@@ -31,19 +69,17 @@ public class MyFirstRobot extends AdvancedRobot {
         double enemyBearing = e.getBearing();
         double enemyEnergy = e.getEnergy();
         double distance = e.getDistance();
-        state.setBearing(enemyBearing);
-        state.setDistance(distance);
-        state.setMyEnergy(this.getEnergy());
-        state.setEnemyEnergy(enemyEnergy);
-        state.setEnemyHeading(enemyEnergy);
+        double enemyHeading = e.getHeading();
+        curState.setBearing(enemyBearing);
+        curState.setDistance(distance);
+        curState.setMyEnergy(getEnergy());
+        curState.setEnemyEnergy(enemyEnergy);
+        curState.setEnemyHeading(enemyHeading);
+        turnGunRight(getHeading() - getGunHeading() + e.getBearing());
     }
 
     public void fire() {
-        scan();
-    }
-
-    public State getState() {
-        return State.generateState(State.getStateArray(state));
+        fireBullet(1);
     }
 
     /**
@@ -52,7 +88,8 @@ public class MyFirstRobot extends AdvancedRobot {
      */
     @Override
     public void onWin(WinEvent event) {
-        reward += 10;
+        reward += 10*REWARD;
+        updateState();
     }
 
     /**
@@ -61,7 +98,8 @@ public class MyFirstRobot extends AdvancedRobot {
      */
     @Override
     public void onDeath(DeathEvent event) {
-        reward -= 10;
+        reward -= 10*REWARD;
+        updateState();
     }
 
     /**
@@ -70,8 +108,7 @@ public class MyFirstRobot extends AdvancedRobot {
      */
     @Override
     public void onBulletHit(BulletHitEvent event) {
-        double bulletPower = event.getBullet().getPower();
-        reward += 3*(int)bulletPower;
+        reward += 2*REWARD;
     }
 
     /**
@@ -80,8 +117,7 @@ public class MyFirstRobot extends AdvancedRobot {
      */
     @Override
     public void onBulletMissed(BulletMissedEvent event) {
-        double bulletPower = event.getBullet().getPower();
-        reward -= (int)bulletPower;
+        reward -= 4/curState.getMyEnergy()*REWARD;
     }
 
     /**
@@ -90,7 +126,16 @@ public class MyFirstRobot extends AdvancedRobot {
      */
     @Override
     public void onHitByBullet(HitByBulletEvent event) {
-        double bulletPower = event.getBullet().getPower();
-        reward -= 3*(int)bulletPower;
+        reward -= 4/curState.getMyEnergy()*REWARD;
+    }
+
+    @Override
+    public void onHitWall(HitWallEvent event) {
+        reward -= 2/curState.getMyEnergy()*REWARD;
+    }
+
+    @Override
+    public void onBattleEnded(BattleEndedEvent event) {
+        q.save();
     }
 }
