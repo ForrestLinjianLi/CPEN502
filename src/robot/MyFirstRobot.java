@@ -44,27 +44,27 @@ public class MyFirstRobot extends AdvancedRobot {
     public void move(Action.ACTION action) {
         switch (action) {
             case FORWARD:
-                ahead(Action.SHORT_DISTANCE);
+                setAhead(Action.SHORT_DISTANCE);
             case BACKWARD:
-                back(Action.SHORT_DISTANCE);
-//            case MOVE_TO_CENTRE:
-//                double b = absoluteBearing(getX(), getY(), 400, 300);
-//                turnRight(b);
-//                back(Action.LONG_DISTANCE);
+                setBack(Action.SHORT_DISTANCE);
+            case MOVE_TO_CENTRE:
+                double b = absoluteBearing(getX(), getY(), 400, 300);
+                setTurnRight(b);
+                setBack(Action.LONG_DISTANCE);
             case AHEAD_LEFT:
-                turnLeft(Action.SHORT_ANGLE);
-                ahead(Action.SHORT_DISTANCE);
+                setTurnLeft(Action.SHORT_ANGLE);
+                setAhead(Action.SHORT_DISTANCE);
             case AHEAD_RIGHT:
-                turnRight(Action.SHORT_ANGLE);
+                setTurnRight(Action.SHORT_ANGLE);
                 ahead(Action.SHORT_DISTANCE);
             case FIRE:
                 predictiveFire();
             case BACK_RIGHT:
-                turnRight(Action.SHORT_ANGLE);
-                back(Action.SHORT_DISTANCE);
+                setTurnRight(Action.SHORT_ANGLE);
+                setBack(Action.SHORT_DISTANCE);
             case BACK_LEFT:
-                turnLeft(Action.SHORT_ANGLE);
-                back(Action.SHORT_DISTANCE);
+                setTurnLeft(Action.SHORT_ANGLE);
+                setBack(Action.SHORT_DISTANCE);
             curState.setHorizontal(getX());
             curState.setVertical(getY());
         }
@@ -95,14 +95,10 @@ public class MyFirstRobot extends AdvancedRobot {
      */
     public void onScannedRobot(ScannedRobotEvent e) {
         double enemyBearing = e.getBearing();
-//        double enemyEnergy = e.getEnergy();
         double distance = e.getDistance();
-//        double enemyHeading = e.getHeading();
         curState.setBearing(enemyBearing);
         curState.setDistance(distance);
         curState.setMyEnergy(getEnergy());
-//        curState.setEnemyEnergy(enemyEnergy);
-//        curState.setEnemyHeading(enemyHeading);
         enemyBot.update(e, this);
     }
 
@@ -114,7 +110,7 @@ public class MyFirstRobot extends AdvancedRobot {
 
     public void predictiveFire() {
         // calculate speed of bullet
-        double bulletSpeed = 17;
+        double bulletSpeed = 20;
         // distance = rate * time, solved for time
         long time = (long)(enemyBot.getDistance() / bulletSpeed);
 
@@ -122,15 +118,13 @@ public class MyFirstRobot extends AdvancedRobot {
         double futureX = enemyBot.getFutureX(time);
         double futureY = enemyBot.getFutureY(time);
         double absDeg = absoluteBearing(getX(), getY(), futureX, futureY);
-        // non-predictive firing can be done like this:
-        //double absDeg = absoluteBearing(getX(), getY(), enemy.getX(), enemy.getY());
 
         // turn the gun to the predicted x,y location
         setTurnGunRight(normalizeBearing(absDeg - getGunHeading()));
 
         // if the gun is cool and we're pointed in the right direction, shoot!
         if (getGunHeat() == 0 && Math.abs(getGunTurnRemaining()) < 10) {
-            fire(1);
+            setFire(2);
         }
     }
 
@@ -160,7 +154,7 @@ public class MyFirstRobot extends AdvancedRobot {
      */
     @Override
     public void onBulletHit(BulletHitEvent event) {
-        reward += 3*REWARD;
+        reward += REWARD;
     }
 
     /**
@@ -169,8 +163,7 @@ public class MyFirstRobot extends AdvancedRobot {
      */
     @Override
     public void onBulletMissed(BulletMissedEvent event) {
-//        reward -= 4/curState.getMyEnergy()*REWARD;
-        reward -= REWARD;
+        reward -= 2/(curState.getMyEnergy()+1)*REWARD;
     }
 
     /**
@@ -179,20 +172,18 @@ public class MyFirstRobot extends AdvancedRobot {
      */
     @Override
     public void onHitByBullet(HitByBulletEvent event) {
-//        reward -= 4/curState.getMyEnergy()*REWARD;
-        reward -= 5*REWARD;
+        reward -= REWARD;
     }
 
     @Override
     public void onHitWall(HitWallEvent event) {
-//        reward -= 2/curState.getMyEnergy()*REWARD;
         reward -= REWARD;
     }
 
-    @Override
-    public void onHitRobot(HitRobotEvent event) {
-        reward -= REWARD;
-    }
+//    @Override
+//    public void onHitRobot(HitRobotEvent event) {
+//        reward -= REWARD;
+//    }
 
     @Override
     public void onBattleEnded(BattleEndedEvent event) {

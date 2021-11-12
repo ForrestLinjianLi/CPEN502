@@ -7,9 +7,9 @@ public class Action {
         AHEAD_LEFT,
         AHEAD_RIGHT,
         FIRE,
-//        MOVE_TO_CENTRE,
         BACK_LEFT,
-        BACK_RIGHT
+        BACK_RIGHT,
+        MOVE_TO_CENTRE
     }
 
     public static final int LONG_DISTANCE = 100;
@@ -24,25 +24,11 @@ public class Action {
     }
 
     public static int getActionNum(ACTION action) {
-        switch (action) {
-            case FORWARD:
-                return 0;
-            case BACKWARD:
-                return 1;
-            case AHEAD_LEFT:
-                return 2;
-            case AHEAD_RIGHT:
-                return 3;
-            case FIRE:
-                return 4;
-            case BACK_LEFT:
-                return 5;
-            case BACK_RIGHT:
-                return 6;
-//            case MOVE_TO_CENTRE:
-//                return 5;
-            default:
-                return -1;
+        for (int i = 0; i < NUM_ACTIONS; i++) {
+            if (getAction(i).equals(action)) {
+                return i;
+            }
         }
+        return 0;
     }
 }
