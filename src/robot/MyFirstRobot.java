@@ -7,6 +7,7 @@ import robocode.*;
 
 import java.awt.*;
 import java.awt.geom.Point2D;
+import java.io.File;
 
 public class MyFirstRobot extends AdvancedRobot {
     private QLearning q;
@@ -16,6 +17,9 @@ public class MyFirstRobot extends AdvancedRobot {
     private double reward;
     private EnemyBot enemyBot;
     private static final double REWARD = 0.5;
+
+    private static int winCount = 0;
+    private static int lastWinCount = 0;
 
     public void run() {
         prevState = new State();
@@ -134,6 +138,7 @@ public class MyFirstRobot extends AdvancedRobot {
      */
     @Override
     public void onWin(WinEvent event) {
+        winCount++;
         reward += 10*REWARD;
         updateState();
     }
@@ -184,6 +189,28 @@ public class MyFirstRobot extends AdvancedRobot {
 //    public void onHitRobot(HitRobotEvent event) {
 //        reward -= REWARD;
 //    }
+
+    @Override
+    public void onRoundEnded(RoundEndedEvent event) {
+        int roundNum = event.getRound()+1;
+        int roundPeirod = 50;
+        if (roundNum%roundPeirod == 0) {
+            File file = getDataFile("result.csv");
+
+            int trueWinCount = winCount - lastWinCount;
+
+            double winrate = (double) trueWinCount/roundPeirod;
+            try (RobocodeFileWriter fileWriter = new RobocodeFileWriter(file.getAbsolutePath(),true)){
+                fileWriter.write(roundNum + ","+ trueWinCount + "," +  winrate +"\n");
+                fileWriter.flush();
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+            lastWinCount = winCount;
+
+        }
+
+    }
 
     @Override
     public void onBattleEnded(BattleEndedEvent event) {
