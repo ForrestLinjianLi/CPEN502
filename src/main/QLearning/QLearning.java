@@ -10,6 +10,8 @@ public class QLearning {
     //todo: add random rate
     private static final double RANDOM_RATE = 0.3;
 
+    private static boolean is_On_Policy = false;
+
     public static QLearning getInstance() {
         if (qLearning == null) {
             qLearning = new QLearning();
@@ -28,9 +30,16 @@ public class QLearning {
         return lookUpTable.nextAction(state, RANDOM_RATE);
     }
 
-    public void qLearn(double reward, Action.ACTION action, State prevState, State curState) {
+    public void qLearn(double reward, Action.ACTION action, State prevState, State curState, Action.ACTION nextAction) {
         double prevQ = lookUpTable.getQ(prevState, action);
-        double curQ = lookUpTable.getMaxQ(curState);
+        double curQ;
+
+        if(is_On_Policy){
+            curQ = lookUpTable.getQ(curState, nextAction);
+        }else{
+            curQ = lookUpTable.getMaxQ(curState);
+        }
+
         double updatedQ = prevQ + DELTA * (reward + GAMMA * curQ - prevQ);
         lookUpTable.updateQ(updatedQ, prevState, action);
     }
@@ -38,6 +47,7 @@ public class QLearning {
     public void save(File argFile) {
         lookUpTable.save(argFile);
     }
+
 
     public void load(String fileName) {
         lookUpTable.load(fileName);

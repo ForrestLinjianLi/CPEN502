@@ -21,18 +21,23 @@ public class MyFirstRobot extends AdvancedRobot {
     private static int winCount = 0;
     private static int lastWinCount = 0;
 
+    private Action.ACTION tempAction;
+    private double brearing;
+
     public void run() {
         prevState = new State();
         curState = new State();
         enemyBot = new EnemyBot();
         q = QLearning.getInstance();
+        tempAction  = q.move(curState);
         setAllColors(Color.red);
         setAdjustGunForRobotTurn(true); //Gun not Fix to body
         setAdjustRadarForGunTurn(true);
         while(true) {
             setTurnRadarLeftRadians(2*Math.PI);
             scan();
-            curAction = q.move(curState);
+//            curAction = q.move(curState);
+            curAction = tempAction;
             move(curAction);
             execute();
             updateState();
@@ -40,7 +45,8 @@ public class MyFirstRobot extends AdvancedRobot {
     }
 
     public void updateState() {
-        q.qLearn(reward, curAction, prevState, curState);
+        tempAction  = q.move(curState);
+        q.qLearn(reward, curAction, prevState, curState, tempAction);
         reward = 0;
         prevState = new State(curState);
     }
@@ -62,7 +68,9 @@ public class MyFirstRobot extends AdvancedRobot {
                 setTurnRight(Action.SHORT_ANGLE);
                 ahead(Action.SHORT_DISTANCE);
             case FIRE:
-                predictiveFire();
+//                predictiveFire();
+                turnGunRight(getHeading()-getGunHeading()+brearing);
+                fire(3);
             case BACK_RIGHT:
                 setTurnRight(Action.SHORT_ANGLE);
                 setBack(Action.SHORT_DISTANCE);
@@ -99,6 +107,7 @@ public class MyFirstRobot extends AdvancedRobot {
      */
     public void onScannedRobot(ScannedRobotEvent e) {
         double enemyBearing = e.getBearing();
+        brearing = enemyBearing;
         double distance = e.getDistance();
         curState.setBearing(enemyBearing);
         curState.setDistance(distance);
@@ -185,10 +194,10 @@ public class MyFirstRobot extends AdvancedRobot {
         reward -= REWARD;
     }
 
-//    @Override
-//    public void onHitRobot(HitRobotEvent event) {
-//        reward -= REWARD;
-//    }
+    @Override
+    public void onHitRobot(HitRobotEvent event) {
+        reward -= REWARD;
+    }
 
     @Override
     public void onRoundEnded(RoundEndedEvent event) {
