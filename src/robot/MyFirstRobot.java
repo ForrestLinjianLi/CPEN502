@@ -13,7 +13,7 @@ public class MyFirstRobot extends AdvancedRobot {
     private QLearning q;
     private State prevState;
     private State curState;
-    private Action.ACTION curAction;
+    private Action curAction;
     private double reward;
     private EnemyBot enemyBot;
     private static final double REWARD = 0.5;
@@ -21,7 +21,7 @@ public class MyFirstRobot extends AdvancedRobot {
     private static int winCount = 0;
     private static int lastWinCount = 0;
 
-    private Action.ACTION tempAction;
+    private Action tempAction;
     private double brearing;
     private static String LUT_FILE_NAME = "LUT.txt";
     private static String RESULT_FILE_NAME = "result.txt";
@@ -53,7 +53,7 @@ public class MyFirstRobot extends AdvancedRobot {
         prevState = new State(curState);
     }
 
-    public void move(Action.ACTION action) {
+    public void move(Action action) {
         switch (action) {
             case FORWARD:
                 setAhead(Action.SHORT_DISTANCE);

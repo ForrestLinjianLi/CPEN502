@@ -1,13 +1,10 @@
 package main.QLearning;
 
 import lombok.Getter;
-import lombok.Setter;
 import main.interfaces.LUTInterface;
-import net.sf.robocode.host.io.RobotFileOutputStream;
 import robocode.RobocodeFileOutputStream;
 
 import java.io.*;
-import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -81,7 +78,7 @@ public class LookUpTable implements LUTInterface, Serializable {
         return 0;
     }
 
-    public double getQ(State state, Action.ACTION action) {
+    public double getQ(State state, Action action) {
         return table.getOrDefault(state, stateQ.clone())[Action.getActionNum(action)];
     }
 
@@ -94,14 +91,14 @@ public class LookUpTable implements LUTInterface, Serializable {
         return max;
     }
 
-    public Action.ACTION nextAction(State state, double randomRate) {
+    public Action nextAction(State state, double randomRate) {
         Random random = new Random();
         if ((count.getOrDefault(state, 0) < 400) && (random.nextInt(9) < (10 * randomRate))) {
             return Action.getAction(random.nextInt(Action.NUM_ACTIONS));
         }
         double[] actionQVals = table.getOrDefault(state, stateQ.clone());
         double max = actionQVals[0];
-        Action.ACTION action = Action.ACTION.FORWARD;
+        Action action = Action.FORWARD;
         for (int i = 0; i < Action.NUM_ACTIONS; i++) {
             if (max<actionQVals[i]) {
                 action = Action.getAction(i);
@@ -111,7 +108,7 @@ public class LookUpTable implements LUTInterface, Serializable {
         return action;
     }
 
-    public void updateQ(double q, State state, Action.ACTION action) {
+    public void updateQ(double q, State state, Action action) {
         table.put(state, table.getOrDefault(state, stateQ.clone()));
         table.get(state)[Action.getActionNum(action)] = q;
         count.put(state, count.getOrDefault(state, 0)+1);

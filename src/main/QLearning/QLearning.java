@@ -7,7 +7,7 @@ public class QLearning {
     private static QLearning qLearning;
     private static final double DELTA = 0.9;
     private static final double GAMMA = 0.9;
-    private static final double RANDOM_RATE = 0.3;
+    private static final double RANDOM_RATE = 0.8;
 
     private static boolean is_On_Policy = false;
 
@@ -25,11 +25,11 @@ public class QLearning {
         load(file);
     }
 
-    public Action.ACTION move(State state) {
+    public Action move(State state) {
         return lookUpTable.nextAction(state, RANDOM_RATE);
     }
 
-    public void qLearn(double reward, Action.ACTION action, State prevState, State curState, Action.ACTION nextAction) {
+    public void qLearn(double reward, Action action, State prevState, State curState, Action nextAction) {
         double prevQ = lookUpTable.getQ(prevState, action);
         double curQ;
 
