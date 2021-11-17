@@ -23,12 +23,14 @@ public class MyFirstRobot extends AdvancedRobot {
 
     private Action.ACTION tempAction;
     private double brearing;
+    private static String LUT_FILE_NAME = "LUT.txt";
+    private static String RESULT_FILE_NAME = "result.txt";
 
     public void run() {
         prevState = new State();
         curState = new State();
         enemyBot = new EnemyBot();
-        q = QLearning.getInstance();
+        q = QLearning.getInstance(getDataFile(LUT_FILE_NAME));
         tempAction  = q.move(curState);
         setAllColors(Color.red);
         setAdjustGunForRobotTurn(true); //Gun not Fix to body
@@ -204,7 +206,7 @@ public class MyFirstRobot extends AdvancedRobot {
         int roundNum = event.getRound()+1;
         int roundPeirod = 50;
         if (roundNum%roundPeirod == 0) {
-            File file = getDataFile("result.csv");
+            File file = getDataFile(RESULT_FILE_NAME);
 
             int trueWinCount = winCount - lastWinCount;
 
@@ -223,6 +225,6 @@ public class MyFirstRobot extends AdvancedRobot {
 
     @Override
     public void onBattleEnded(BattleEndedEvent event) {
-        q.save(getDataFile("LUT.txt"));
+        q.save(getDataFile(LUT_FILE_NAME));
     }
 }

@@ -37,5 +37,5 @@ public interface CommonInterface {
      * made to load data into an LUT or neural net whose structure does not match * the data in the file. (e.g. wrong number of hidden neurons).
      * @throws IOException
      */
-    public void load(String argFileName); }
+    public void load(File file); }
 

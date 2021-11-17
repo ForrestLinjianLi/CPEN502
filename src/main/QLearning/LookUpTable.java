@@ -57,9 +57,9 @@ public class LookUpTable implements LUTInterface, Serializable {
     }
 
     @Override
-    public void load(String argFileName) {
+    public void load(File file) {
         try {
-            FileInputStream fis = new FileInputStream(argFileName);
+            FileInputStream fis = new FileInputStream(file);
             ObjectInputStream in = new ObjectInputStream(fis);
             LookUpTable lookUpTable = (LookUpTable) in.readObject();
             this.table = lookUpTable.getTable();

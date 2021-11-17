@@ -7,23 +7,22 @@ public class QLearning {
     private static QLearning qLearning;
     private static final double DELTA = 0.9;
     private static final double GAMMA = 0.9;
-    //todo: add random rate
     private static final double RANDOM_RATE = 0.3;
 
     private static boolean is_On_Policy = false;
 
-    public static QLearning getInstance() {
+    public static QLearning getInstance(File file) {
         if (qLearning == null) {
-            qLearning = new QLearning();
+            qLearning = new QLearning(file);
             return qLearning;
         }
         return qLearning;
     }
 
 
-    public QLearning() {
+    public QLearning(File file) {
         lookUpTable = new LookUpTable();
-        load("out/production/CPEN502/robot/MyFirstRobot.data/LUT.txt");
+        load(file);
     }
 
     public Action.ACTION move(State state) {
@@ -49,7 +48,7 @@ public class QLearning {
     }
 
 
-    public void load(String fileName) {
-        lookUpTable.load(fileName);
+    public void load(File file) {
+        lookUpTable.load(file);
     }
 }

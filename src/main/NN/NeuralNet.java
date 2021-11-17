@@ -143,8 +143,8 @@ public class NeuralNet implements NeuralNetInterface, Serializable {
     }
 
     @Override
-    public void load(String argFileName) {
-        try(ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream(argFileName))) {
+    public void load(File file) {
+        try(ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream(file))) {
             NeuralNet neuralNet = (NeuralNet) objectInputStream.readObject();
             Class thisClass = this.getClass();
             for (Field field: neuralNet.getClass().getDeclaredFields()
