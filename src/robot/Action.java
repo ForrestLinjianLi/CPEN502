@@ -1,4 +1,4 @@
-package main.QLearning;
+package robot;
 
 public enum Action {
     FORWARD,

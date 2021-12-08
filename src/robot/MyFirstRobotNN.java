@@ -1,14 +1,15 @@
 package robot;
 
-import main.QLearning.QLearning;
+import exception.NumberMismatchException;
+import main.NN.NeuralNet;
 import robocode.*;
 
 import java.awt.*;
 import java.awt.geom.Point2D;
 import java.io.File;
 
-public class MyFirstRobot extends AdvancedRobot {
-    private QLearning q;
+public class MyFirstRobotNN extends AdvancedRobot {
+    private NeuralNet nn;
     private State prevState;
     private State curState;
     private Action curAction;
@@ -21,15 +22,23 @@ public class MyFirstRobot extends AdvancedRobot {
 
     private Action tempAction;
     private double brearing;
-    private static String LUT_FILE_NAME = "LUT.txt";
+    private static String NN_FILE_NAME = "NN.txt";
     private static String RESULT_FILE_NAME = "result.csv";
 
     public void run() {
         prevState = new State();
         curState = new State();
         enemyBot = new EnemyBot();
-        q = QLearning.getInstance(getDataFile(LUT_FILE_NAME));
-        tempAction  = q.getNextAction(curState);
+
+        //Load NN after the offline training.
+        nn = new NeuralNet();
+        nn.load(getDataFile(NN_FILE_NAME));
+
+        try {
+            tempAction  = nn.getNextAction(curState);
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
         setAllColors(Color.red);
         setAdjustGunForRobotTurn(true); //Gun not Fix to body
         setAdjustRadarForGunTurn(true);
@@ -45,8 +54,12 @@ public class MyFirstRobot extends AdvancedRobot {
     }
 
     public void updateState() {
-        tempAction  = q.getNextAction(curState);
-        q.qLearn(reward, curAction, prevState, curState, tempAction);
+        try {
+            nn.sarsaTrain(reward, prevState, curAction, curState);
+        } catch (IllegalAccessException | NumberMismatchException e) {
+            e.printStackTrace();
+        }
+
         reward = 0;
         prevState = new State(curState);
     }
@@ -223,6 +236,6 @@ public class MyFirstRobot extends AdvancedRobot {
 
     @Override
     public void onBattleEnded(BattleEndedEvent event) {
-        q.save(getDataFile(LUT_FILE_NAME));
+        nn.save(getDataFile(NN_FILE_NAME));
     }
 }

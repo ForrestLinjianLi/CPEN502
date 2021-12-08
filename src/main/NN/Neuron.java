@@ -40,7 +40,8 @@ public class Neuron implements Serializable {
      */
     public double sum(double[] X) throws NumberMismatchException {
         this.inputs = X;
-        if (X.length != this.weights.size()) throw new NumberMismatchException("");
+        if (X.length != this.weights.size())
+            throw new NumberMismatchException("");
         double res = 0;
         for (int i = 0; i < X.length; i++) {
             res += X[i] * this.weights.get(i);
@@ -82,6 +83,14 @@ public class Neuron implements Serializable {
                 this.output * (1 - this.output) * errorSignal * weight;
     }
 
+//    /**
+//     * Set the error signal for the hidden layer neurons.
+//     * @param errorSignal: the error signals of the layer above
+//     */
+//    public void setErrorSignalLinear(double errorSignal, double weight) {
+//        this.errorSignal = errorSignal * weight;
+//    }
+
     public void setOutput(double output) {
         this.output = output;
     }
@@ -95,6 +104,14 @@ public class Neuron implements Serializable {
         this.errorSignal = isBipolar ? error * (this.output + 1) * (1 - this.output) * 0.5 :
                 error * this.output * (1 - this.output);
     }
+
+//    /**
+//     * Set the error signal for output neuron
+//     * @param error: target - yi
+//     */
+//    public void setErrorSignalForOutputNeuronLinear(double error) {
+//        this.errorSignal = error;
+//    }
 
 
     public double getWeightByIndex(int i) {

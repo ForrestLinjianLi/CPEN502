@@ -3,6 +3,8 @@ package main.QLearning;
 import lombok.Getter;
 import main.interfaces.LUTInterface;
 import robocode.RobocodeFileOutputStream;
+import robot.Action;
+import robot.State;
 
 import java.io.*;
 import java.util.Arrays;
@@ -13,18 +15,16 @@ import java.util.Random;
 @Getter
 public class LookUpTable implements LUTInterface, Serializable {
 
-    private Map<Object, double[]> table;
+    private Map<State, double[]> table;
     private Map<State, Integer> count;
     private double[] stateQ;
-    private static final String FILE_PATH = "data/LUT";
-
 
     /**
      * Constructor.
      * The order must match the order as referred to in argVariableFloor.
      */
     public LookUpTable () {
-        table = new HashMap<Object, double[]>();
+        table = new HashMap<State, double[]>();
         count = new HashMap<>();
         stateQ = new double[Action.NUM_ACTIONS];
         Arrays.fill(stateQ, 0d);
@@ -93,7 +93,7 @@ public class LookUpTable implements LUTInterface, Serializable {
 
     public Action nextAction(State state, double randomRate) {
         Random random = new Random();
-        if ((count.getOrDefault(state, 0) < 400) && (random.nextInt(9) < (10 * randomRate))) {
+        if ((count.getOrDefault(state, 0) < 1000) && (random.nextInt(9) < (10 * randomRate))) {
             return Action.getAction(random.nextInt(Action.NUM_ACTIONS));
         }
         double[] actionQVals = table.getOrDefault(state, stateQ.clone());

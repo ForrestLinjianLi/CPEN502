@@ -1,4 +1,4 @@
-package main.QLearning;
+package robot;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -78,5 +78,9 @@ public class State implements Serializable {
     public int hashCode() {
 //        return Objects.hash(enemyHeading, bearing, enemyEnergy, myEnergy, distance, vertical, horizontal);
         return Objects.hash(bearing, myEnergy, distance, vertical, horizontal);
+    }
+
+    public double[] toDoubleArray() {
+        return new double[]{this.bearing, this.myEnergy, this.distance, this.vertical, this.horizontal};
     }
 }

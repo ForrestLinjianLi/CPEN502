@@ -1,5 +1,8 @@
 package main.QLearning;
 
+import robot.Action;
+import robot.State;
+
 import java.io.File;
 
 public class QLearning {
@@ -7,7 +10,7 @@ public class QLearning {
     private static QLearning qLearning;
     private static final double DELTA = 0.9;
     private static final double GAMMA = 0.9;
-    private static final double RANDOM_RATE = 0.8;
+    private static final double RANDOM_RATE = 0.2;
 
     private static boolean is_On_Policy = false;
 
@@ -25,7 +28,7 @@ public class QLearning {
         load(file);
     }
 
-    public Action move(State state) {
+    public Action getNextAction(State state) {
         return lookUpTable.nextAction(state, RANDOM_RATE);
     }
 
@@ -50,5 +53,9 @@ public class QLearning {
 
     public void load(File file) {
         lookUpTable.load(file);
+    }
+
+    public LookUpTable getLookUpTable() {
+        return lookUpTable;
     }
 }
