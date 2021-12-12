@@ -1,18 +1,18 @@
 package main.QLearning;
 
-import robot.Action;
-import robot.State;
+import main.robot.Action;
+import main.robot.State;
 
 import java.io.File;
 
 public class QLearning {
     private LookUpTable lookUpTable;
     private static QLearning qLearning;
-    private static final double DELTA = 0.9;
+    private static final double ALPHA = 0.2;
     private static final double GAMMA = 0.9;
-    private static final double RANDOM_RATE = 0.2;
+    private static final double RANDOM_RATE = 0;
 
-    private static boolean is_On_Policy = false;
+    private static boolean IS_ON_POLICY = false;
 
     public static QLearning getInstance(File file) {
         if (qLearning == null) {
@@ -32,17 +32,17 @@ public class QLearning {
         return lookUpTable.nextAction(state, RANDOM_RATE);
     }
 
-    public void qLearn(double reward, Action action, State prevState, State curState, Action nextAction) {
+    public void qLearn(double reward, Action action, State prevState, State curState) {
         double prevQ = lookUpTable.getQ(prevState, action);
         double curQ;
-
-        if(is_On_Policy){
+        Action nextAction = getNextAction(curState);
+        if(IS_ON_POLICY){
             curQ = lookUpTable.getQ(curState, nextAction);
         }else{
             curQ = lookUpTable.getMaxQ(curState);
         }
 
-        double updatedQ = prevQ + DELTA * (reward + GAMMA * curQ - prevQ);
+        double updatedQ = prevQ + ALPHA * (reward + GAMMA * curQ - prevQ);
         lookUpTable.updateQ(updatedQ, prevState, action);
     }
 

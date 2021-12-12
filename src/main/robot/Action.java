@@ -1,14 +1,11 @@
-package robot;
+package main.robot;
 
 public enum Action {
-    FORWARD,
-    BACKWARD,
     AHEAD_LEFT,
     AHEAD_RIGHT,
     FIRE,
     BACK_LEFT,
-    BACK_RIGHT,
-    MOVE_TO_CENTRE;
+    BACK_RIGHT;
 
     public static final int LONG_DISTANCE = 100;
     public static final int SHORT_DISTANCE = 50;

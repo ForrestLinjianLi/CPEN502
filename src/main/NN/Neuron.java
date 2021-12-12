@@ -1,6 +1,6 @@
 package main.NN;
 
-import exception.NumberMismatchException;
+import main.exception.NumberMismatchException;
 import lombok.Getter;
 
 import java.io.Serializable;

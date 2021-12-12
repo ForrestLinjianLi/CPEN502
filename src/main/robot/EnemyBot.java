@@ -1,4 +1,4 @@
-package robot;
+package main.robot;
 
 import lombok.Getter;
 import robocode.Robot;

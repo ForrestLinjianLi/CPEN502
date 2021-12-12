@@ -1,37 +1,51 @@
 package main.NN;
 
-import exception.NumberMismatchException;
+import main.exception.NumberMismatchException;
 import lombok.Getter;
-import robot.Action;
+import main.robot.Action;
 import main.QLearning.LookUpTable;
-import robot.State;
+import main.robot.State;
 import main.interfaces.NeuralNetInterface;
+import robocode.RobocodeFileOutputStream;
 
 import java.io.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Getter
 public class NeuralNet implements NeuralNetInterface, Serializable {
 
     private int argNumInputs;
     private int argNumHidden;
+    private int argNumOutput;
     private double argLearningRate;
     private double argMomentumTerm;
     private double argA;
     private double argB;
-    private List<List<Neuron>> hiddenLayers;
-    private Neuron outputNeuron;
+    private List<Neuron> hiddenLayer;
+    private List<Neuron> outputLayer;
     private boolean isBipolar;
 
-    private static final double THREASHOLD = 100;
-    public static final String FILE_PATH = "./data/NN.txt";
-    private static final int NUM_HIDDEN_LAYERS = 1;
-    private static final double DELTA = 0.9;
+    private static final double THREASHOLD = 27.23;
+    public static final String FILE_PATH = "./data/NN.ser";
+//    private static final int NUM_HIDDEN_LAYERS = 1;
+    private static final double DELTA = 0.1;
     private static final double GAMMA = 0.9;
-    private static final double RANDOM_RATE = 0.2;
+    private static final double RANDOM_RATE = 0;
+    private static NeuralNet neuralNet;
 
+
+    public static NeuralNet getInstance(File file) {
+        if (neuralNet == null) {
+            neuralNet = new NeuralNet();
+            neuralNet.load(file);
+            return neuralNet;
+        }
+        return neuralNet;
+
+    }
     public NeuralNet() {
     }
 
@@ -44,26 +58,37 @@ public class NeuralNet implements NeuralNetInterface, Serializable {
      * @param argA Integer lower bound of sigmoid used by the output neuron only.
      * @param argB Integer upper bound of sigmoid used by the output neuron only.
      */
-    public NeuralNet(int argNumInputs, int argNumHidden, double argLearningRate, double argMomentumTerm, double argA, double argB) {
+    public NeuralNet(int argNumInputs, int argNumHidden, int argNumOutput, double argLearningRate, double argMomentumTerm, double argA, double argB) {
         this.argNumInputs = argNumInputs;
         this.argNumHidden = argNumHidden;
+        this.argNumOutput = argNumOutput;
         this.argLearningRate = argLearningRate;
         this.argMomentumTerm = argMomentumTerm;
         this.argA = argA;
         this.argB = argB;
-        this.hiddenLayers = new ArrayList<>();
+        this.hiddenLayer = new ArrayList<>();
         this.isBipolar = argA + argB == 0;
         initializeWeights();
     }
 
     @Override
     public double outputFor(double[] X) {
-        return forwardFeedWSigmoid(X);
+        return forwardFeedWSigmoid(X)[0];
     }
 
     @Override
     public double train(double[] X, double argValue) {
-        return forwardFeedWSigmoid(X) - argValue;
+        return forwardFeedWSigmoid(X)[0] - argValue;
+    }
+
+    public void save(File argFile, boolean isRobo)  {
+        try {
+            OutputStream outputStream = isRobo? new RobocodeFileOutputStream(argFile): new FileOutputStream(argFile);
+            ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
+            objectOutputStream.writeObject(this);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -79,20 +104,19 @@ public class NeuralNet implements NeuralNetInterface, Serializable {
     public void load(File file) {
         try(ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream(file))) {
             NeuralNet neuralNet = (NeuralNet) objectInputStream.readObject();
-            if (this.getHiddenLayers() != null && neuralNet.getHiddenLayers().size() != this.getHiddenLayers().size())
+            if (this.getHiddenLayer() != null && neuralNet.getHiddenLayer().size() != this.getHiddenLayer().size())
                 return;
-            this.hiddenLayers = neuralNet.hiddenLayers;
-            this.outputNeuron = neuralNet.outputNeuron;
+            this.hiddenLayer = neuralNet.hiddenLayer;
+            this.outputLayer = neuralNet.outputLayer;
             this.argA = neuralNet.argA;
             this.argB = neuralNet.argB;
             this.argLearningRate = neuralNet.argLearningRate;
             this.argMomentumTerm = neuralNet.argMomentumTerm;
             this.argNumHidden = neuralNet.argNumHidden;
             this.argNumInputs = neuralNet.argNumInputs;
+            this.argNumOutput = neuralNet.argNumOutput;
             this.isBipolar = neuralNet.isBipolar;
-        } catch (ClassNotFoundException | FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
+        } catch (ClassNotFoundException | IOException e) {
             e.printStackTrace();
         }
     }
@@ -109,28 +133,31 @@ public class NeuralNet implements NeuralNetInterface, Serializable {
 
     @Override
     public void initializeWeights() {
-        this.hiddenLayers = new ArrayList<>();
-        this.outputNeuron = new Neuron(this.argNumHidden + 1, this.isBipolar);
-        List<Neuron> firstLayer = new ArrayList<>();
+        this.hiddenLayer = new ArrayList<>();
+        this.outputLayer = new ArrayList<>();
         int neuronCount = this.argNumHidden + 1;
         while (neuronCount -- > 0) {
-            firstLayer.add(new Neuron(this.argNumInputs + 1, this.isBipolar));
+            this.hiddenLayer.add(new Neuron(this.argNumInputs + 1, this.isBipolar));
         }
-        hiddenLayers.add(firstLayer);
-        for (int i = 1; i < NUM_HIDDEN_LAYERS; i++) {
-            neuronCount = this.argNumHidden + 1;
-            List<Neuron> curLayer = new ArrayList<>();
-            while (neuronCount -- > 0) {
-                curLayer.add(new Neuron(this.argNumHidden + 1, this.isBipolar));
-            }
-            hiddenLayers.add(curLayer);
+        neuronCount = this.argNumOutput;
+        while (neuronCount -- > 0) {
+            this.outputLayer.add(new Neuron(this.argNumHidden + 1, this.isBipolar));
         }
+//        hiddenLayer.add(firstLayer);
+//        for (int i = 1; i < NUM_HIDDEN_LAYERS; i++) {
+//            neuronCount = this.argNumHidden + 1;
+//            List<Neuron> curLayer = new ArrayList<>();
+//            while (neuronCount -- > 0) {
+//                curLayer.add(new Neuron(this.argNumHidden + 1, this.isBipolar));
+//            }
+//            hiddenLayer.add(curLayer);
+//        }
     }
 
     @Override
     public void zeroWeights() {
-        this.hiddenLayers.forEach((e) -> e.forEach(Neuron::zeroWeights));
-        this.outputNeuron.zeroWeights();
+        this.hiddenLayer.forEach(Neuron::zeroWeights);
+        this.outputLayer.forEach(Neuron::zeroWeights);
     }
 
     private void createDataFile(StringBuilder stringBuilder, String fileName) {
@@ -177,12 +204,11 @@ public class NeuralNet implements NeuralNetInterface, Serializable {
                 for(int i=0; i<actionQVals.length; i++){
                     actionQVals[i] = -1 + 2*(actionQVals[i]-QMin)/QValRange;
                 }
-
+                double[] input = getInputFromStateNAction(curState);
+                double[] yi = forwardFeedWSigmoid(input);
                 for (int i = 0; i < Action.NUM_ACTIONS; i++) {
-                    double[] input = getInputFromStateNAction(curState, i);
-                    double yi = forwardFeedWSigmoid(input);
-                    totalError += Math.pow(Math.abs(actionQVals[i] - yi), 2) / 2;
-                    backProp(yi, actionQVals[i]);
+                    totalError += Math.pow(Math.abs(actionQVals[i] - yi[i]), 2) / 2;
+                    backProp(yi[i], actionQVals[i], i);
                 }
             }
             epoch++;
@@ -190,7 +216,7 @@ public class NeuralNet implements NeuralNetInterface, Serializable {
         } while (totalError > THREASHOLD);
         String fileName = String.format("./data/%s_m%f_%s_%d.txt", "NQ",  this.argMomentumTerm, LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH-mm-ss")), epoch);
         createDataFile(stringBuilder, fileName);
-        save(new File(FILE_PATH));
+        save(new File(FILE_PATH), false);
         return epoch;
     }
 
@@ -201,7 +227,7 @@ public class NeuralNet implements NeuralNetInterface, Serializable {
      * @param targets: training targets
      * @return number of epochs
      */
-    public int trainByLUT(double[][] X, double[] targets) {
+    public int train(double[][] X, double[] targets) {
         int epoch = 0;
         double totalError;
         StringBuilder stringBuilder = new StringBuilder();
@@ -209,9 +235,11 @@ public class NeuralNet implements NeuralNetInterface, Serializable {
             totalError = 0;
             for (int i = 0; i < X.length; i++) {
                 double[] temp = setUpBias(X[i]);
-                double yi = forwardFeedWSigmoid(temp);
-                totalError += Math.pow(Math.abs(targets[i] - yi), 2) / 2;
-                backProp(yi, targets[i]);
+                double[] yi = forwardFeedWSigmoid(temp);
+                for (int j = 0; j < this.argNumOutput; j++) {
+                    totalError += Math.pow(Math.abs(targets[i] - yi[j]), 2) / 2;
+                    backProp(yi[j], targets[i], j);
+                }
             }
             epoch++;
             stringBuilder.append(totalError + "\n");
@@ -221,85 +249,100 @@ public class NeuralNet implements NeuralNetInterface, Serializable {
         return epoch;
     }
 
-    public double forwardFeedWSigmoid(double[] X) {
+    public double[] forwardFeedWSigmoid(double[] X) {
+        double[] res = new double[this.argNumOutput];
         try {
-            for (Neuron neuron : this.hiddenLayers.get(0)) {
+            for (Neuron neuron : this.hiddenLayer) {
                 double curOutput = this.customSigmoid(neuron.sum(X));
                 neuron.setOutput(curOutput);
             }
-            for (int i = 1; i < NUM_HIDDEN_LAYERS; i++) {
-                double[] inputs = this.hiddenLayers.get(i - 1).stream().mapToDouble(Neuron::getOutput).toArray();
-                for (Neuron neuron : this.hiddenLayers.get(i)) {
-                    double curOutput = this.customSigmoid(neuron.sum(inputs));
-                    neuron.setOutput(curOutput);
-                }
-            }
+//            for (int i = 1; i < NUM_HIDDEN_LAYERS; i++) {
+//                double[] inputs = this.hiddenLayer.get(i - 1).stream().mapToDouble(Neuron::getOutput).toArray();
+//                for (Neuron neuron : this.hiddenLayer.get(i)) {
+//                    double curOutput = this.customSigmoid(neuron.sum(inputs));
+//                    neuron.setOutput(curOutput);
+//                }
+//            }
             updateOutNeuron();
-            return this.outputNeuron.getOutput();
+            for (int i = 0; i < this.argNumOutput; i++) {
+                res[i] = this.outputLayer.get(i).getOutput();
+            }
+            return res;
         } catch (NumberMismatchException e) {
             e.printStackTrace();
         }
-        return 0;
+        return res;
     }
 
     public void updateOutNeuron() {
-        double[] inputs = this.hiddenLayers.get(NUM_HIDDEN_LAYERS - 1).stream().mapToDouble(Neuron::getOutput).toArray();
+//        double[] inputs = this.hiddenLayer.get(NUM_HIDDEN_LAYERS - 1).stream().mapToDouble(Neuron::getOutput).toArray();
+        double[] inputs = this.hiddenLayer.stream().mapToDouble(Neuron::getOutput).toArray();
         try {
-            this.outputNeuron.setOutput(customSigmoid(this.outputNeuron.sum(inputs)));
+            for (Neuron neuron:this.outputLayer) {
+                neuron.setOutput(customSigmoid(neuron.sum(inputs)));
+            }
         } catch (NumberMismatchException e) {
             e.printStackTrace();
         }
     }
 
-    public void sarsaTrain(double reward, State prevState, Action prevAction, State curState) throws IllegalAccessException, NumberMismatchException {
-        double[] prevInput = getInputFromStateNAction(prevState, Action.getActionNum(prevAction));
-        double prevQ = forwardFeedWSigmoid(prevInput);
-        double curQ = Double.MIN_VALUE;
-        for (int i = 0; i < Action.NUM_ACTIONS; i++) {
-            double[] curInput = getInputFromStateNAction(curState, i);
-            double tempQ = forwardFeedWSigmoid(curInput);
-            curQ = Math.max(tempQ, curQ);
-        }
+    public void qTrain(double reward, State prevState, Action prevAction, State curState) throws IllegalAccessException, NumberMismatchException {
+        int prevActionIndex = Action.getActionNum(prevAction);
+        double[] prevInput = getInputFromStateNAction(prevState);
+        double prevQ = forwardFeedWSigmoid(prevInput)[prevActionIndex];
+        double[] curInput = getInputFromStateNAction(curState);
+        double curQ = Arrays.stream(forwardFeedWSigmoid(curInput)).max().orElse(0);
         double updatedQ = prevQ + DELTA * (reward + GAMMA * curQ - prevQ);
-        backProp(prevQ, updatedQ);
+        backProp(prevQ, updatedQ, prevActionIndex);
+    }
+
+    public void sarsaTrain(double reward, State prevState, Action prevAction, State curState, Action curAction) throws IllegalAccessException, NumberMismatchException {
+        int prevActionIndex = Action.getActionNum(prevAction);
+        int curActionIndex = Action.getActionNum(curAction);
+        double[] prevInput = getInputFromStateNAction(prevState);
+        double[] prevQ = forwardFeedWSigmoid(prevInput);
+        double[] curInput = getInputFromStateNAction(curState);
+        double[] curQ = forwardFeedWSigmoid(curInput);
+        double updatedQ = prevQ[prevActionIndex] + DELTA * (reward + GAMMA * curQ[curActionIndex] - prevQ[prevActionIndex]);
+        backProp(prevQ[prevActionIndex], updatedQ, prevActionIndex);
     }
 
     public Action getNextAction(State state) throws IllegalAccessException {
-        Random random = new Random();
-        if ((random.nextInt(9) < (10 * RANDOM_RATE))) {
-            return Action.getAction(random.nextInt(Action.NUM_ACTIONS));
+        if (Math.random() < RANDOM_RATE) {
+            return Action.getAction(new Random().nextInt(Action.NUM_ACTIONS));
         }
-        double max = Double.MIN_VALUE;
-        Action action = Action.FORWARD;
+        double max = Double.NEGATIVE_INFINITY;
+        Action action = Action.AHEAD_LEFT;
+        double[] curInput = getInputFromStateNAction(state);
+        double[] tempQ = forwardFeedWSigmoid(curInput);
         for (int i = 0; i < Action.NUM_ACTIONS; i++) {
-            double[] curInput = getInputFromStateNAction(state, i);
-            double tempQ = forwardFeedWSigmoid(curInput);
-            if (max<tempQ) {
+            if (max<tempQ[i]) {
                 action = Action.getAction(i);
-                max = tempQ;
+                max = tempQ[i];
             }
         }
         return action;
     }
 
-    public void backProp(double yi, double target) {
-        this.outputNeuron.setErrorSignalForOutputNeuron(target - yi);
-        this.outputNeuron.updateWeights(this.argMomentumTerm, this.argLearningRate);
+    public void backProp(double yi, double target, int outputNeuronIndex) {
+        Neuron outpuNeuron = this.outputLayer.get(outputNeuronIndex);
+        outpuNeuron.setErrorSignalForOutputNeuron(target - yi);
+        outpuNeuron.updateWeights(this.argMomentumTerm, this.argLearningRate);
         for (int i = 0; i < this.argNumHidden; i++) {
-            Neuron curNeuron = this.hiddenLayers.get(NUM_HIDDEN_LAYERS-1).get(i);
-            curNeuron.setErrorSignal(this.outputNeuron.getErrorSignal(), this.outputNeuron.getWeightByIndex(i));
+//            Neuron curNeuron = this.hiddenLayer.get(NUM_HIDDEN_LAYERS-1).get(i);
+            Neuron curNeuron = this.hiddenLayer.get(i);
+            curNeuron.setErrorSignal(outpuNeuron.getErrorSignal(), outpuNeuron.getWeightByIndex(i));
             curNeuron.updateWeights(this.argMomentumTerm, this.argLearningRate);
         }
-
-        for (int i = NUM_HIDDEN_LAYERS-2; i >= 0; i--) {
-            for (int j = 0; j < this.argNumHidden; j++) {
-                Neuron curNeuron = this.hiddenLayers.get(i).get(j);
-                for (Neuron nextLayerNeuron: this.hiddenLayers.get(i+1)) {
-                    curNeuron.setErrorSignal(nextLayerNeuron.getErrorSignal(), nextLayerNeuron.getWeightByIndex(i));
-                    curNeuron.updateWeights(this.argMomentumTerm, this.argLearningRate);
-                }
-            }
-        }
+//        for (int i = NUM_HIDDEN_LAYERS-2; i >= 0; i--) {
+//            for (int j = 0; j < this.argNumHidden; j++) {
+//                Neuron curNeuron = this.hiddenLayer.get(i).get(j);
+//                for (Neuron nextLayerNeuron: this.hiddenLayer.get(i+1)) {
+//                    curNeuron.setErrorSignal(nextLayerNeuron.getErrorSignal(), nextLayerNeuron.getWeightByIndex(i));
+//                    curNeuron.updateWeights(this.argMomentumTerm, this.argLearningRate);
+//                }
+//            }
+//        }
     }
 
 //    public void backPropLinear(double yi, double target) {
@@ -312,13 +355,12 @@ public class NeuralNet implements NeuralNetInterface, Serializable {
 //        }
 //    }
 
-    private double[] getInputFromStateNAction(State state, int action) throws IllegalAccessException {
+    private double[] getInputFromStateNAction(State state) throws IllegalAccessException {
         double[] stateArray = state.toDoubleArray();
-        double[] res = new double[stateArray.length+1];
+        double[] res = new double[stateArray.length];
         for (int i = 0; i < stateArray.length; i++) {
             res[i] = stateArray[i];
         }
-        res[stateArray.length] = action;
         return setUpBias(res);
     }
 

@@ -1,5 +1,8 @@
+package main;
+
 import main.NN.NeuralNet;
 import main.QLearning.QLearning;
+import main.robot.Action;
 
 import java.io.File;
 import java.util.Scanner;
@@ -16,6 +19,7 @@ public class Run {
         Scanner s = new Scanner(System.in);
         int epochCount = 0;
 
+
         while (true) {
             System.out.println("++++++++++++++++++++++++++++++++++++++++");
             NeuralNet neuralNet;
@@ -27,7 +31,7 @@ public class Run {
             }if (isRobocode.equals("Y")){
                 // First use LUT data to do the offline training
                 // Ask for different hyperparameters:
-                QLearning q = QLearning.getInstance(new File("./data/LUT.txt"));
+                QLearning q = QLearning.getInstance(new File("./data/LUT.ser"));
                 System.out.println("do load? Y/N");
                 String onLoad = s.nextLine();
                 if (onLoad.equals("Y")) {
@@ -41,8 +45,8 @@ public class Run {
                     System.out.println("argLearningRate: ");
                     double argLearningRate = Double.parseDouble(s.nextLine());
 
-                    int argNumInputs = 6;
-                    neuralNet = new NeuralNet(argNumInputs, argNumHidden, argLearningRate, argMomentumTerm,-1,1);
+                    int argNumInputs = 5;
+                    neuralNet = new NeuralNet(argNumInputs, argNumHidden, Action.NUM_ACTIONS, argLearningRate, argMomentumTerm,-1,1);
                 }
                 System.out.println("Robocode offline training starts running.");
                 try {
@@ -61,18 +65,18 @@ public class Run {
                     continue;
                 }
                 if (isBipolar.equals("Y")) {
-                    neuralNet = new NeuralNet(2, 4, 0.2, argMomentumTerm, -1, 1);
+                    neuralNet = new NeuralNet(2, 4, 1, 0.2, argMomentumTerm, -1, 1);
                     System.out.println("Bipolar starts running.");
-                    epochCount = neuralNet.trainByLUT(inputBipolar, targetBipolar);
+                    epochCount = neuralNet.train(inputBipolar, targetBipolar);
                 } else {
-                    neuralNet = new NeuralNet(2, 4, 0.2, argMomentumTerm, 0, 1);
+                    neuralNet = new NeuralNet(2, 4, 1, 0.2, argMomentumTerm, 0, 1);
                     System.out.println("Binary starts running.");
-                    epochCount = neuralNet.trainByLUT(inputBinary, targetBinary);
+                    epochCount = neuralNet.train(inputBinary, targetBinary);
                 }
             }
 
             System.out.printf("The number of epoch is: %d \n", epochCount);
-//            neuralNet.save(new File("./data/NN.txt"));
+            neuralNet.save(new File("./data/NN.ser"));
         }
     }
 }

@@ -1,4 +1,4 @@
-package robot;
+package main.robot;
 
 import main.QLearning.QLearning;
 import robocode.*;
@@ -9,19 +9,17 @@ import java.io.File;
 
 public class MyFirstRobot extends AdvancedRobot {
     private QLearning q;
-    private State prevState;
-    private State curState;
-    private Action curAction;
-    private double reward;
-    private EnemyBot enemyBot;
-    private static final double REWARD = 0.5;
+    protected State prevState;
+    protected State curState;
+    protected double reward;
+    protected EnemyBot enemyBot;
+    protected Action curAction;
+    protected double brearing;
 
+    private static final double REWARD = 0.5;
     private static int winCount = 0;
     private static int lastWinCount = 0;
-
-    private Action tempAction;
-    private double brearing;
-    private static String LUT_FILE_NAME = "LUT.txt";
+    private static String LUT_FILE_NAME = "LUT.ser";
     private static String RESULT_FILE_NAME = "result.csv";
 
     public void run() {
@@ -29,38 +27,26 @@ public class MyFirstRobot extends AdvancedRobot {
         curState = new State();
         enemyBot = new EnemyBot();
         q = QLearning.getInstance(getDataFile(LUT_FILE_NAME));
-        tempAction  = q.getNextAction(curState);
         setAllColors(Color.red);
         setAdjustGunForRobotTurn(true); //Gun not Fix to body
         setAdjustRadarForGunTurn(true);
         while(true) {
             setTurnRadarLeftRadians(2*Math.PI);
             scan();
-//            curAction = q.getNextAction(curState);
-            curAction = tempAction;
+            curAction = q.getNextAction(curState);
             move(curAction);
             execute();
             updateState();
+            reward = 0;
         }
     }
-
+//
     public void updateState() {
-        tempAction  = q.getNextAction(curState);
-        q.qLearn(reward, curAction, prevState, curState, tempAction);
-        reward = 0;
-        prevState = new State(curState);
+        q.qLearn(reward, curAction, prevState, curState);
     }
 
     public void move(Action action) {
         switch (action) {
-            case FORWARD:
-                setAhead(Action.SHORT_DISTANCE);
-            case BACKWARD:
-                setBack(Action.SHORT_DISTANCE);
-            case MOVE_TO_CENTRE:
-                double b = absoluteBearing(getX(), getY(), 400, 300);
-                setTurnRight(b);
-                setBack(Action.LONG_DISTANCE);
             case AHEAD_LEFT:
                 setTurnLeft(Action.SHORT_ANGLE);
                 setAhead(Action.SHORT_DISTANCE);
@@ -77,9 +63,107 @@ public class MyFirstRobot extends AdvancedRobot {
             case BACK_LEFT:
                 setTurnLeft(Action.SHORT_ANGLE);
                 setBack(Action.SHORT_DISTANCE);
-            curState.setHorizontal(getX());
-            curState.setVertical(getY());
         }
+    }
+
+    /**
+     * onScannedRobot: What to do when you see another main.robot
+     */
+    @Override
+    public void onScannedRobot(ScannedRobotEvent e) {
+        double enemyBearing = e.getBearing();
+        prevState = new State(curState, false);
+        this.brearing = enemyBearing;
+        this.curState.setX(getX());
+        this.curState.setY(getY());
+        this.curState.setRelativeCoord(e.getDistance(), getHeading(), enemyBearing);
+        this.curState.setEnergeDiff(getEnergy() - e.getEnergy());
+        this.enemyBot.update(e, this);
+    }
+
+    /**
+     * This method is called when the main.robot won.
+     * @param event
+     */
+    @Override
+    public void onWin(WinEvent event) {
+        winCount++;
+        reward += 10*REWARD;
+        updateState();
+    }
+
+    /**
+     * This method is called when the main.robot died.
+     * @param event
+     */
+    @Override
+    public void onDeath(DeathEvent event) {
+        reward -= 10*REWARD;
+        updateState();
+    }
+
+    /**
+     * This method is called when one of your bullets hits another main.robot
+     * @param event
+     */
+    @Override
+    public void onBulletHit(BulletHitEvent event) {
+        reward += 0.5*REWARD;
+    }
+
+    /**
+     * This method is called when one of our bullets has missed.
+     * @param event
+     */
+    @Override
+    public void onBulletMissed(BulletMissedEvent event) {
+        reward -= 2*REWARD;
+    }
+
+    /**
+     * This method is called when your main.robot is hit by a bullet.
+     * @param event
+     */
+    @Override
+    public void onHitByBullet(HitByBulletEvent event) {
+        reward -= REWARD;
+    }
+
+    @Override
+    public void onHitWall(HitWallEvent event) {
+        reward -= REWARD;
+    }
+
+    @Override
+    public void onHitRobot(HitRobotEvent event) {
+        reward -= REWARD;
+    }
+
+    @Override
+    public void onRoundEnded(RoundEndedEvent event) {
+        int roundNum = event.getRound()+1;
+        int roundPeirod = 200;
+        if (roundNum%roundPeirod == 0) {
+            File file = getDataFile(RESULT_FILE_NAME);
+
+            int trueWinCount = winCount - lastWinCount;
+
+            double winrate = (double) trueWinCount/roundPeirod;
+            try (RobocodeFileWriter fileWriter = new RobocodeFileWriter(file.getAbsolutePath(),true)){
+                fileWriter.write(roundNum + ","+ trueWinCount + "," +  winrate +"\n");
+                fileWriter.flush();
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+            lastWinCount = winCount;
+
+        }
+
+    }
+
+    @Override
+    public void onBattleEnded(BattleEndedEvent event) {
+        q.save(getDataFile(LUT_FILE_NAME));
     }
 
     private double absoluteBearing(double x1, double y1, double x2, double y2) {
@@ -102,26 +186,13 @@ public class MyFirstRobot extends AdvancedRobot {
         return bearing;
     }
 
-    /**
-     * onScannedRobot: What to do when you see another robot
-     */
-    public void onScannedRobot(ScannedRobotEvent e) {
-        double enemyBearing = e.getBearing();
-        brearing = enemyBearing;
-        double distance = e.getDistance();
-        curState.setBearing(enemyBearing);
-        curState.setDistance(distance);
-        curState.setMyEnergy(getEnergy());
-        enemyBot.update(e, this);
-    }
-
     private double normalizeBearing(double angle) {
         while (angle >  180) angle -= 360;
         while (angle < -180) angle += 360;
         return angle;
     }
 
-    public void predictiveFire() {
+    private void predictiveFire() {
         // calculate speed of bullet
         double bulletSpeed = 20;
         // distance = rate * time, solved for time
@@ -139,90 +210,5 @@ public class MyFirstRobot extends AdvancedRobot {
         if (getGunHeat() == 0 && Math.abs(getGunTurnRemaining()) < 10) {
             setFire(2);
         }
-    }
-
-    /**
-     * This method is called when the robot won.
-     * @param event
-     */
-    @Override
-    public void onWin(WinEvent event) {
-        winCount++;
-        reward += 10*REWARD;
-        updateState();
-    }
-
-    /**
-     * This method is called when the robot died.
-     * @param event
-     */
-    @Override
-    public void onDeath(DeathEvent event) {
-        reward -= 10*REWARD;
-        updateState();
-    }
-
-    /**
-     * This method is called when one of your bullets hits another robot
-     * @param event
-     */
-    @Override
-    public void onBulletHit(BulletHitEvent event) {
-        reward += REWARD;
-    }
-
-    /**
-     * This method is called when one of our bullets has missed.
-     * @param event
-     */
-    @Override
-    public void onBulletMissed(BulletMissedEvent event) {
-        reward -= 2/(curState.getMyEnergy()+1)*REWARD;
-    }
-
-    /**
-     * This method is called when your robot is hit by a bullet.
-     * @param event
-     */
-    @Override
-    public void onHitByBullet(HitByBulletEvent event) {
-        reward -= REWARD;
-    }
-
-    @Override
-    public void onHitWall(HitWallEvent event) {
-        reward -= REWARD;
-    }
-
-    @Override
-    public void onHitRobot(HitRobotEvent event) {
-        reward -= REWARD;
-    }
-
-    @Override
-    public void onRoundEnded(RoundEndedEvent event) {
-        int roundNum = event.getRound()+1;
-        int roundPeirod = 50;
-        if (roundNum%roundPeirod == 0) {
-            File file = getDataFile(RESULT_FILE_NAME);
-
-            int trueWinCount = winCount - lastWinCount;
-
-            double winrate = (double) trueWinCount/roundPeirod;
-            try (RobocodeFileWriter fileWriter = new RobocodeFileWriter(file.getAbsolutePath(),true)){
-                fileWriter.write(roundNum + ","+ trueWinCount + "," +  winrate +"\n");
-                fileWriter.flush();
-            }catch (Exception e){
-                e.printStackTrace();
-            }
-            lastWinCount = winCount;
-
-        }
-
-    }
-
-    @Override
-    public void onBattleEnded(BattleEndedEvent event) {
-        q.save(getDataFile(LUT_FILE_NAME));
     }
 }

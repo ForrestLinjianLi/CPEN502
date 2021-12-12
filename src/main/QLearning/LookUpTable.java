@@ -2,9 +2,9 @@ package main.QLearning;
 
 import lombok.Getter;
 import main.interfaces.LUTInterface;
+import main.robot.Action;
+import main.robot.State;
 import robocode.RobocodeFileOutputStream;
-import robot.Action;
-import robot.State;
 
 import java.io.*;
 import java.util.Arrays;
@@ -16,7 +16,6 @@ import java.util.Random;
 public class LookUpTable implements LUTInterface, Serializable {
 
     private Map<State, double[]> table;
-    private Map<State, Integer> count;
     private double[] stateQ;
 
     /**
@@ -24,8 +23,7 @@ public class LookUpTable implements LUTInterface, Serializable {
      * The order must match the order as referred to in argVariableFloor.
      */
     public LookUpTable () {
-        table = new HashMap<State, double[]>();
-        count = new HashMap<>();
+        table = new HashMap<>();
         stateQ = new double[Action.NUM_ACTIONS];
         Arrays.fill(stateQ, 0d);
         initialiseLUT();
@@ -43,28 +41,21 @@ public class LookUpTable implements LUTInterface, Serializable {
 
     @Override
     public void save(File argFile) {
-        try {
-            RobocodeFileOutputStream fos = new RobocodeFileOutputStream(argFile);
-            ObjectOutputStream out = new ObjectOutputStream(fos);
-            out.writeObject(this);
-            out.close();
-        } catch (Exception e) {
+        try(ObjectOutputStream writer = new ObjectOutputStream(new RobocodeFileOutputStream(argFile))){
+            writer.writeObject(this.table);
+            writer.flush();
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     @Override
     public void load(File file) {
-        try {
-            FileInputStream fis = new FileInputStream(file);
-            ObjectInputStream in = new ObjectInputStream(fis);
-            LookUpTable lookUpTable = (LookUpTable) in.readObject();
-            this.table = lookUpTable.getTable();
-            this.count = lookUpTable.getCount();
-            this.stateQ = lookUpTable.getStateQ();
-            in.close();
-        } catch (Exception ex) {
-            ex.printStackTrace();
+        try(ObjectInputStream reader = new ObjectInputStream(new FileInputStream(file))) {
+            Map<State, double[]> table = (Map<State, double[]>) reader.readObject();
+            this.table = table;
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
         }
     }
 
@@ -92,13 +83,13 @@ public class LookUpTable implements LUTInterface, Serializable {
     }
 
     public Action nextAction(State state, double randomRate) {
-        Random random = new Random();
-        if ((count.getOrDefault(state, 0) < 1000) && (random.nextInt(9) < (10 * randomRate))) {
-            return Action.getAction(random.nextInt(Action.NUM_ACTIONS));
+        if (Math.random() < randomRate) {
+
+            return Action.getAction(new Random().nextInt(Action.NUM_ACTIONS));
         }
         double[] actionQVals = table.getOrDefault(state, stateQ.clone());
         double max = actionQVals[0];
-        Action action = Action.FORWARD;
+        Action action = Action.AHEAD_LEFT;
         for (int i = 0; i < Action.NUM_ACTIONS; i++) {
             if (max<actionQVals[i]) {
                 action = Action.getAction(i);
@@ -111,6 +102,6 @@ public class LookUpTable implements LUTInterface, Serializable {
     public void updateQ(double q, State state, Action action) {
         table.put(state, table.getOrDefault(state, stateQ.clone()));
         table.get(state)[Action.getActionNum(action)] = q;
-        count.put(state, count.getOrDefault(state, 0)+1);
+//        count.put(state, count.getOrDefault(state, 0)+1);
     }
 }
