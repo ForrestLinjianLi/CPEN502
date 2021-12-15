@@ -8,7 +8,7 @@ import java.io.File;
 public class QLearning {
     private LookUpTable lookUpTable;
     private static QLearning qLearning;
-    private static final double ALPHA = 0.2;
+    private static final double ALPHA = 0.1;
     private static final double GAMMA = 0.9;
     private static final double RANDOM_RATE = 0;
 

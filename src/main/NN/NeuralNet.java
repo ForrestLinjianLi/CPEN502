@@ -1,5 +1,6 @@
 package main.NN;
 
+import main.ReplayMemory.ReplayMemory;
 import main.exception.NumberMismatchException;
 import lombok.Getter;
 import main.robot.Action;
@@ -12,7 +13,6 @@ import java.io.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Getter
 public class NeuralNet implements NeuralNetInterface, Serializable {
@@ -27,24 +27,24 @@ public class NeuralNet implements NeuralNetInterface, Serializable {
     private List<Neuron> hiddenLayer;
     private List<Neuron> outputLayer;
     private boolean isBipolar;
+    private ReplayMemory<Object[]> replayMemory;
 
-    private static final double THREASHOLD = 27.23;
+    private static final double THREASHOLD = 10;
+    private static final double EPOCH_NUM = 4000;
     public static final String FILE_PATH = "./data/NN.ser";
-//    private static final int NUM_HIDDEN_LAYERS = 1;
     private static final double DELTA = 0.1;
-    private static final double GAMMA = 0.9;
-    private static final double RANDOM_RATE = 0;
+    private static final double GAMMA = 0;
+    private static final double RANDOM_RATE = 0.05;
     private static NeuralNet neuralNet;
 
 
     public static NeuralNet getInstance(File file) {
         if (neuralNet == null) {
-            neuralNet = new NeuralNet();
+            neuralNet = new NeuralNet(5, 10, 5, 0.9, 0.9, -1, 1);
             neuralNet.load(file);
             return neuralNet;
         }
         return neuralNet;
-
     }
     public NeuralNet() {
     }
@@ -68,6 +68,7 @@ public class NeuralNet implements NeuralNetInterface, Serializable {
         this.argB = argB;
         this.hiddenLayer = new ArrayList<>();
         this.isBipolar = argA + argB == 0;
+        this.replayMemory = new ReplayMemory<>(6);
         initializeWeights();
     }
 
@@ -212,9 +213,17 @@ public class NeuralNet implements NeuralNetInterface, Serializable {
                 }
             }
             epoch++;
+            if (epoch >= EPOCH_NUM)
+                break;
             stringBuilder.append(totalError + "\n");
         } while (totalError > THREASHOLD);
-        String fileName = String.format("./data/%s_m%f_%s_%d.txt", "NQ",  this.argMomentumTerm, LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH-mm-ss")), epoch);
+        String fileName = String.format("./data/%s_m%f_lr%f_h%d_%s_%d.txt",
+                "NQ",
+                this.argMomentumTerm,
+                this.argLearningRate,
+                this.argNumHidden,
+                LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH-mm-ss")),
+                epoch);
         createDataFile(stringBuilder, fileName);
         save(new File(FILE_PATH), false);
         return epoch;

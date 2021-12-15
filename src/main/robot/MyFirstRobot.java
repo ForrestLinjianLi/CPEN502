@@ -142,7 +142,7 @@ public class MyFirstRobot extends AdvancedRobot {
     @Override
     public void onRoundEnded(RoundEndedEvent event) {
         int roundNum = event.getRound()+1;
-        int roundPeirod = 200;
+        int roundPeirod = 50;
         if (roundNum%roundPeirod == 0) {
             File file = getDataFile(RESULT_FILE_NAME);
 
@@ -150,7 +150,8 @@ public class MyFirstRobot extends AdvancedRobot {
 
             double winrate = (double) trueWinCount/roundPeirod;
             try (RobocodeFileWriter fileWriter = new RobocodeFileWriter(file.getAbsolutePath(),true)){
-                fileWriter.write(roundNum + ","+ trueWinCount + "," +  winrate +"\n");
+//                fileWriter.write(roundNum + ","+ trueWinCount + "," +  winrate +"\n");
+                fileWriter.write(winrate +"\n");
                 fileWriter.flush();
             }catch (Exception e){
                 e.printStackTrace();
