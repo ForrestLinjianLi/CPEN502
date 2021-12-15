@@ -27,14 +27,16 @@ public class NeuralNet implements NeuralNetInterface, Serializable {
     private List<Neuron> hiddenLayer;
     private List<Neuron> outputLayer;
     private boolean isBipolar;
+    private int epsilon = EPOCH_NUM;
+    private int round = 0;
     private ReplayMemory<Object[]> replayMemory;
 
-    private static final double THREASHOLD = 10;
-    private static final double EPOCH_NUM = 4000;
+    private static final int THREASHOLD = 10;
+    private static final int EPOCH_NUM = 1000;
     public static final String FILE_PATH = "./data/NN.ser";
-    private static final double DELTA = 0.1;
-    private static final double GAMMA = 0;
-    private static final double RANDOM_RATE = 0.05;
+    private static final double ALPHA = 0.1;
+    private static final double GAMMA = 0.9;
+    private static final double RANDOM_RATE = 0.4 ;
     private static NeuralNet neuralNet;
 
 
@@ -296,13 +298,19 @@ public class NeuralNet implements NeuralNetInterface, Serializable {
     }
 
     public void qTrain(double reward, State prevState, Action prevAction, State curState) throws IllegalAccessException, NumberMismatchException {
+        round++;
+        if (epsilon > 0 && round%EPOCH_NUM==0) {
+            epsilon -= 0.2;
+        }
         int prevActionIndex = Action.getActionNum(prevAction);
         double[] prevInput = getInputFromStateNAction(prevState);
         double prevQ = forwardFeedWSigmoid(prevInput)[prevActionIndex];
         double[] curInput = getInputFromStateNAction(curState);
         double curQ = Arrays.stream(forwardFeedWSigmoid(curInput)).max().orElse(0);
-        double updatedQ = prevQ + DELTA * (reward + GAMMA * curQ - prevQ);
+        double loss = ALPHA * (reward + GAMMA * curQ - prevQ);
+        double updatedQ = prevQ + loss;
         backProp(prevQ, updatedQ, prevActionIndex);
+
     }
 
     public void sarsaTrain(double reward, State prevState, Action prevAction, State curState, Action curAction) throws IllegalAccessException, NumberMismatchException {
@@ -312,7 +320,7 @@ public class NeuralNet implements NeuralNetInterface, Serializable {
         double[] prevQ = forwardFeedWSigmoid(prevInput);
         double[] curInput = getInputFromStateNAction(curState);
         double[] curQ = forwardFeedWSigmoid(curInput);
-        double updatedQ = prevQ[prevActionIndex] + DELTA * (reward + GAMMA * curQ[curActionIndex] - prevQ[prevActionIndex]);
+        double updatedQ = prevQ[prevActionIndex] + ALPHA * (reward + GAMMA * curQ[curActionIndex] - prevQ[prevActionIndex]);
         backProp(prevQ[prevActionIndex], updatedQ, prevActionIndex);
     }
 

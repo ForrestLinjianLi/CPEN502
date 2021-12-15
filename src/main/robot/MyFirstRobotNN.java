@@ -1,5 +1,7 @@
 package main.robot;
 
+import main.ReplayMemory.Experience;
+import main.ReplayMemory.ReplayMemory;
 import main.exception.NumberMismatchException;
 import main.NN.NeuralNet;
 import robocode.*;
@@ -9,6 +11,9 @@ import java.awt.*;
 public class MyFirstRobotNN extends MyFirstRobot {
     private NeuralNet nn;
     private static String NN_FILE_NAME = "NN.ser";
+    private static final int MINI_BATCH_SIZE = 20;
+    private static final int MEMORY_SIZE = 100;
+    private static ReplayMemory<Experience> replayMemory = new ReplayMemory<>(MEMORY_SIZE);
 
     @Override
     public void run() {
@@ -40,7 +45,21 @@ public class MyFirstRobotNN extends MyFirstRobot {
     @Override
     public void updateState() {
         try {
-            nn.qTrain(reward, prevState, curAction, curState);
+            Experience experience = new Experience();
+            experience.setPrevState(prevState);
+            experience.setPrevAction(curAction);
+            experience.setCurState(curState);
+            experience.setReward(reward);
+            replayMemory.add(experience);
+            if (replayMemory.sizeOf() >= MINI_BATCH_SIZE) {
+                for (Object object: replayMemory.randomSample(MINI_BATCH_SIZE)) {
+                    Experience experienceBatch = (Experience) object;
+                    nn.qTrain(experienceBatch.getReward(),
+                            experienceBatch.getPrevState(),
+                            experienceBatch.getPrevAction(),
+                            experienceBatch.getCurState());
+                }
+            }
         } catch (IllegalAccessException | NumberMismatchException e) {
             e.printStackTrace();
         }
